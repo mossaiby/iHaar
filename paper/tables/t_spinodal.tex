@@ -1,14 +1,15 @@
-\begin{tabular}{l cc}
+\begin{tabular}{p{6.2cm} cc}
 \toprule
- & 2D spinodal & 3D spinodal\\
+quantity & 2D spinodal & 3D spinodal\\
 \midrule
 grid & $256^2$ & $96^3$\\
 $\varepsilon$ & 0.01 & 0.02\\
-steps & 5000+4500 & 1500\\
-$\max_n|M_h^n-M_h^0|$ (with $M_h^0$) & $9.71\times10^{-17}$ (0.1) & $0.00\times10^{0}$ (0.1)\\
-$\max_n(\tilde E^{n+1}-\tilde E^n)$ & $-3.31\times10^{-8}$ & $-4.79\times10^{-9}$\\
-$\max_n(E_h^{n+1}-E_h^n)$ (sampled) & $-8.47\times10^{-7}$ & $-2.43\times10^{-7}$\\
-$\xi=r/\sqrt{E_1+C}$ range & [1.000001, 1.000349] & --\\
-CPU time/step (1 core) & 1.8 ms & 63 ms\\
+time steps & 5000+4500 & 1500\\
+initial mass $M_h^0$ & 0.1 & 0.1\\
+largest mass deviation $|M_h^n-M_h^0|$ & $9.71{\times}10^{-17}$ & $1.39{\times}10^{-17}$\\
+largest step change of the modified energy & $-3.31{\times}10^{-8}$ & $-4.79{\times}10^{-9}$\\
+largest change of $E_h$ between samples & $-8.47{\times}10^{-7}$ & $-2.43{\times}10^{-7}$\\
+range of $\xi=r/\sqrt{E_1+C}$ & 1.00000--1.00035 & --\\
+CPU time per step (one core) & 2.4 ms & 67 ms\\
 \bottomrule
 \end{tabular}

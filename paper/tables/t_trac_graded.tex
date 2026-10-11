@@ -1,12 +1,24 @@
-\begin{tabular}{r cccc cccc}
+\textit{(a) Chebyshev grid}\\[2pt]
+\begin{tabular}{r cc c r}
 \toprule
- & \multicolumn{4}{c}{Chebyshev grid} & \multicolumn{4}{c}{geometric grid (toward traction edge)}\\
-\cmidrule(lr){2-5}\cmidrule(lr){6-9}
-$N$ & $e_{H^1}$ & rate & edge err. & its & $e_{H^1}$ & rate & $h_{\max}/h_{\min}$ & its\\
+$N$ & $e_{H^1}$ & rate & edge error & GMRES its\\
 \midrule
-16 & $6.73\times10^{-3}$ & -- & $8.10\times10^{-3}$ & 26 & $2.79\times10^{-2}$ & -- & 66 & 39\\
-32 & $1.69\times10^{-3}$ & 1.99 & $2.04\times10^{-3}$ & 26 & $7.55\times10^{-3}$ & 1.89 & 76 & 50\\
-64 & $4.23\times10^{-4}$ & 2.00 & $5.10\times10^{-4}$ & 26 & $1.93\times10^{-3}$ & 1.97 & 82 & 69\\
-128 & $1.06\times10^{-4}$ & 2.00 & $1.27\times10^{-4}$ & 26 & $4.87\times10^{-4}$ & 1.99 & 85 & 139\\
+16 & $6.73{\times}10^{-3}$ & -- & $8.10{\times}10^{-3}$ & 26\\
+32 & $1.69{\times}10^{-3}$ & 1.99 & $2.04{\times}10^{-3}$ & 26\\
+64 & $4.23{\times}10^{-4}$ & 2.00 & $5.10{\times}10^{-4}$ & 26\\
+128 & $1.06{\times}10^{-4}$ & 2.00 & $1.27{\times}10^{-4}$ & 26\\
+\bottomrule
+\end{tabular}
+
+\medskip
+\textit{(b) Geometric grid graded toward the traction edge}\\[2pt]
+\begin{tabular}{r cc c r}
+\toprule
+$N$ & $e_{H^1}$ & rate & $h_{\max}/h_{\min}$ & GMRES its\\
+\midrule
+16 & $2.79{\times}10^{-2}$ & -- & 66 & 39\\
+32 & $7.55{\times}10^{-3}$ & 1.89 & 76 & 50\\
+64 & $1.93{\times}10^{-3}$ & 1.97 & 82 & 69\\
+128 & $4.87{\times}10^{-4}$ & 1.99 & 85 & 139\\
 \bottomrule
 \end{tabular}

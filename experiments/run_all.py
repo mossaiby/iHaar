@@ -683,54 +683,65 @@ def E9():
 # E10: IHWC collocation vs Q2 FEM (same uniform / adaptively graded tensor grids)
 # ---------------------------------------------------------------------------
 def E10():
+    """IHWC (GMRES + FDM) vs Q2 FEM with (i) sparse direct and (ii) FDM-preconditioned CG,
+    on identical uniform and IHWC-adapted grids (traction-free-face singularity)."""
     from ihaar.fem_q2 import solve_q2
     fld = WilliamsField(apex=(0.0, 1.0)); bc = {"T": "T"}; out = {"uniform": [], "adaptive": []}
+    D = ("L", "R", "B")
+    def row_for(tx, ty, extra):
+        el = ElasticityMixed(tx, ty, bc); t0 = time.perf_counter(); Ue, Ve, its, _ = el.solve(fld); ti = time.perf_counter() - t0
+        r = dict(extra, cells=int((len(tx) - 1) * (len(ty) - 1)), ihwc_dofs=2 * el.nunk, ihwc_e=el.errors_gauss(Ue, Ve, fld), ihwc_t=ti, ihwc_its=its)
+        q2d = 2 * (2 * len(tx) - 1) * (2 * len(ty) - 1)
+        e, d, t, inf = solve_q2(tx, ty, fld, dirichlet=D, solver="pcg", return_info=True)
+        r.update(q2_dofs=d, q2_e=e, q2pcg_t=t, q2pcg_its=inf["its"])
+        if q2d < 2.6e5:
+            r["q2direct_t"] = solve_q2(tx, ty, fld, dirichlet=D)[2]
+        return r, el, Ue, Ve
     for N in (8, 16, 32, 64, 128):
-        t = np.linspace(0, 1, N + 1); el = ElasticityMixed(t, t, bc)
-        t0 = time.perf_counter(); Ue, Ve, its, _ = el.solve(fld); ti = time.perf_counter() - t0
-        eq, dq, tq = solve_q2(t, t, fld, dirichlet=("L", "R", "B"))
-        out["uniform"].append(dict(N=N, ihwc_dofs=2 * el.nunk, ihwc_e=el.errors_gauss(Ue, Ve, fld), ihwc_t=ti,
-                                   q2_dofs=dq, q2_e=eq, q2_t=tq))
+        t = np.linspace(0, 1, N + 1); r, *_ = row_for(t, t, dict(N=N)); out["uniform"].append(r)
     tx = ty = np.linspace(0, 1, 9)
     for cyc in range(200):
-        el = ElasticityMixed(tx, ty, bc); t0 = time.perf_counter(); Ue, Ve, its, _ = el.solve(fld); ti = time.perf_counter() - t0
-        row = dict(cycle=cyc, cells=int((len(tx) - 1) * (len(ty) - 1)), ihwc_dofs=2 * el.nunk, ihwc_e=el.errors_gauss(Ue, Ve, fld), ihwc_t=ti)
-        if 2 * (2 * len(tx) - 1) * (2 * len(ty) - 1) < 2.6e5:
-            eq, dq, tq = solve_q2(tx, ty, fld, dirichlet=("L", "R", "B")); row.update(q2_dofs=dq, q2_e=eq, q2_t=tq)
-        out["adaptive"].append(row)
-        if 2 * el.nunk > 1.2e5: break
+        r, el, Ue, Ve = row_for(tx, ty, dict(cycle=cyc)); out["adaptive"].append(r)
+        if r["q2_dofs"] > 6e5 or r["ihwc_dofs"] > 1.5e5: break
         etx, ety = el.indicators(Ue, Ve); mx, my = dorfler(etx, ety, 0.6); tx = bisect(tx, mx); ty = bisect(ty, my)
     save("E10", out)
-    print("E10 unif", [(r["ihwc_dofs"], "%.2e" % r["ihwc_e"], r["q2_dofs"], "%.2e" % r["q2_e"]) for r in out["uniform"]])
-    print("E10 adapt", [(r["ihwc_dofs"], "%.2e" % r["ihwc_e"], "%.2f" % r["ihwc_t"], r.get("q2_dofs"), "%.2e" % r.get("q2_e", 0), "%.2f" % r.get("q2_t", 0)) for r in out["adaptive"][::3]])
-    fig, ax = plt.subplots(1, 2, figsize=(7.5, 3.0))
-    for key, lab, mk in (("uniform", "uniform", "o"), ("adaptive", "IHWC-adapted grids", ".")):
-        R_ = out[key]
-        ax[0].loglog([r["ihwc_dofs"] for r in R_], [r["ihwc_e"] for r in R_], mk + "-", label=f"IHWC, {lab}")
-        Rq = [r for r in R_ if "q2_e" in r]
-        ax[0].loglog([r["q2_dofs"] for r in Rq], [r["q2_e"] for r in Rq], mk + "--", label=f"Q2 FEM, {lab}")
-        ax[1].loglog([r["ihwc_e"] for r in R_], [r["ihwc_t"] for r in R_], mk + "-", label=f"IHWC (GMRES+FDM), {lab}")
-        ax[1].loglog([r["q2_e"] for r in Rq], [r["q2_t"] for r in Rq], mk + "--", label=f"Q2 FEM (sparse direct), {lab}")
-    ax[0].set_xlabel("DOFs"); ax[0].set_ylabel(r"relative $H^1$ error"); ax[0].legend(fontsize=6)
+    print("E10 adapt", [(r["ihwc_dofs"], "%.2e" % r["ihwc_e"], "%.2f" % r["ihwc_t"], r["q2_dofs"], "%.2e" % r["q2_e"],
+                         "%.2f" % r["q2pcg_t"], r["q2pcg_its"], "%.2f" % r.get("q2direct_t", -1)) for r in out["adaptive"][::3]])
+    fig, ax = plt.subplots(1, 2, figsize=(7.6, 3.1))
+    A_ = out["adaptive"]; U_ = out["uniform"]
+    ax[0].loglog([r["ihwc_dofs"] for r in U_], [r["ihwc_e"] for r in U_], "o-", c="tab:blue", label="IHWC, uniform")
+    ax[0].loglog([r["q2_dofs"] for r in U_], [r["q2_e"] for r in U_], "o--", c="tab:orange", label="Q2 FEM, uniform")
+    ax[0].loglog([r["ihwc_dofs"] for r in A_], [r["ihwc_e"] for r in A_], ".-", c="tab:blue", label="IHWC, adapted grids")
+    ax[0].loglog([r["q2_dofs"] for r in A_], [r["q2_e"] for r in A_], ".--", c="tab:orange", label="Q2 FEM, same grids")
+    ax[0].set_xlabel("unknowns"); ax[0].set_ylabel(r"relative $H^1$ error"); ax[0].legend(fontsize=6)
+    ax[1].loglog([r["ihwc_e"] for r in A_], [r["ihwc_t"] for r in A_], ".-", c="tab:blue", label="IHWC (GMRES + FDM)")
+    ax[1].loglog([r["q2_e"] for r in A_], [r["q2pcg_t"] for r in A_], ".--", c="tab:orange", label="Q2 FEM (CG + FDM)")
+    Ad = [r for r in A_ if "q2direct_t" in r]
+    ax[1].loglog([r["q2_e"] for r in Ad], [r["q2direct_t"] for r in Ad], "x:", c="tab:red", label="Q2 FEM (sparse direct)")
     ax[1].set_xlabel(r"relative $H^1$ error"); ax[1].set_ylabel("solve time (s)"); ax[1].invert_xaxis(); ax[1].legend(fontsize=6)
     fig.tight_layout(); fig.savefig(os.path.join(FIG, "ihwc_vs_q2.pdf")); plt.close(fig)
 
 
-def E7b():
-    """Traction collocation on graded grids (Chebyshev; geometric toward the traction edge)."""
-    f = SmoothField(); out = {}
-    def geo(N):
-        r = 1.15 ** (32 / N); w = (r ** np.arange(N))[::-1]; return np.r_[0, np.cumsum(w) / w.sum()]
-    cheb = lambda N: 0.5 * (1 - np.cos(np.pi * np.linspace(0, 1, N + 1)))
-    for name, gx, gy in (("chebyshev", cheb, cheb), ("geometric", lambda N: np.linspace(0, 1, N + 1), geo)):
-        rows = []
-        for N in (16, 32, 64, 128):
-            tx, ty = gx(N), gy(N); el = ElasticityMixed(tx, ty, {"T": "T", "R": "T"})
-            Ue, Ve, its, _ = el.solve(f, body_fn=f.body)
-            rows.append(dict(N=N, eH1=el.errors_gauss(Ue, Ve, f), eedge=el.edge_error(Ue, Ve, f), its=its, condV=float(el.condV),
-                             hratio=float(max(np.diff(tx).max() / np.diff(tx).min(), np.diff(ty).max() / np.diff(ty).min()))))
-        out[name] = rows
-    save("E7b", out); print("E7b", out)
+def E11():
+    """Spectrum of D2 = A^{-1} L on graded grids: random grids with neighbour ratio <= rmax."""
+    rng = np.random.default_rng(42); rows = []
+    for bc in ("D", "N"):
+        for rmax in (1.5, 2.0, 4.0):
+            for N in (16, 64, 256):
+                ns = {16: 1000, 64: 400, 256: 60}[N]; im = 0.0; cmax = 0.0; pos = 0
+                for _ in range(ns):
+                    # random multiplicative walk of cell sizes with bounded neighbour ratio
+                    lr = rng.uniform(-np.log(rmax), np.log(rmax), N - 1)
+                    h = np.exp(np.clip(np.r_[0, np.cumsum(lr)], -7, 7)); t = np.r_[0, np.cumsum(h)] / h.sum()
+                    g = Grid1D(t, bc); lam, V = np.linalg.eig(g.D2)
+                    im = max(im, np.abs(lam.imag).max() / np.abs(lam).max())
+                    lr_ = lam.real if bc == "D" else np.sort(lam.real)[:-1]
+                    pos += int((lr_ >= 0).any())
+                    cmax = max(cmax, np.linalg.cond(np.real_if_close(V)))
+                rows.append(dict(bc=bc, rmax=rmax, N=N, samples=ns, max_rel_imag=float(im), nonneg=pos, max_condV=float(cmax),
+                                 hratio_note="global h_max/h_min <= e^14 ~ 1.2e6"))
+                print("E11", rows[-1], flush=True)
+    save("E11", rows)
 
 
 # ---------------------------------------------------------------------------
@@ -771,7 +782,7 @@ def E6(gpu=False):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("--only", default="E1,E2,E3,E4,E5,E7,E7b,E8a,E8b,E8c,E8d,E8fig,E9,E10,E6")
+    ap.add_argument("--only", default="E1,E2,E3,E4,E5,E7,E7b,E8a,E8b,E8c,E8d,E8fig,E9,E10,E11,E6")
     ap.add_argument("--gpu", action="store_true")
     a = ap.parse_args()
     for name in a.only.split(","):

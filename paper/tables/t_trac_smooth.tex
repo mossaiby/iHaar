@@ -1,15 +1,30 @@
-\begin{tabular}{r cc cc cc cc }
+\begin{tabular}{l cc cc}
 \toprule
- & \multicolumn{2}{c}{traction on T} & \multicolumn{2}{c}{traction on T+R} & \multicolumn{2}{c}{traction on L+B} & \multicolumn{2}{c}{traction on T+B}\\
-$N$ & error & rate & error & rate & error & rate & error & rate\\
+& \multicolumn{2}{c}{traction on T} & \multicolumn{2}{c}{traction on T+R}\\
+$N$ & $e_{H^1}$ & rate & $e_{H^1}$ & rate\\
 \midrule
-16 & $3.30\times10^{-3}$ & -- & $4.31\times10^{-3}$ & -- & $3.89\times10^{-3}$ & -- & $5.99\times10^{-3}$ & --\\
-32 & $8.20\times10^{-4}$ & 2.01 & $1.08\times10^{-3}$ & 2.00 & $9.70\times10^{-4}$ & 2.00 & $1.49\times10^{-3}$ & 2.01\\
-64 & $2.05\times10^{-4}$ & 2.00 & $2.70\times10^{-4}$ & 2.00 & $2.42\times10^{-4}$ & 2.00 & $3.71\times10^{-4}$ & 2.00\\
-128 & $5.11\times10^{-5}$ & 2.00 & $6.75\times10^{-5}$ & 2.00 & $6.05\times10^{-5}$ & 2.00 & $9.27\times10^{-5}$ & 2.00\\
-256 & $1.28\times10^{-5}$ & 2.00 & $1.69\times10^{-5}$ & 2.00 & $1.51\times10^{-5}$ & 2.00 & $2.32\times10^{-5}$ & 2.00\\
+16 & $3.30{\times}10^{-3}$ & -- & $4.31{\times}10^{-3}$ & --\\
+32 & $8.20{\times}10^{-4}$ & 2.01 & $1.08{\times}10^{-3}$ & 2.00\\
+64 & $2.05{\times}10^{-4}$ & 2.00 & $2.70{\times}10^{-4}$ & 2.00\\
+128 & $5.11{\times}10^{-5}$ & 2.00 & $6.75{\times}10^{-5}$ & 2.00\\
+256 & $1.28{\times}10^{-5}$ & 2.00 & $1.69{\times}10^{-5}$ & 2.00\\
+GMRES its & \multicolumn{2}{c}{18--20} & \multicolumn{2}{c}{27--27}\\
+edge error, $N{=}256$ & \multicolumn{2}{c}{$8.64{\times}10^{-6}$} & \multicolumn{2}{c}{$1.84{\times}10^{-5}$}\\
+\bottomrule
+\end{tabular}
+
+\medskip
+\begin{tabular}{l cc cc}
+\toprule
+& \multicolumn{2}{c}{traction on L+B} & \multicolumn{2}{c}{traction on T+B}\\
+$N$ & $e_{H^1}$ & rate & $e_{H^1}$ & rate\\
 \midrule
-GMRES its & \multicolumn{2}{c}{18--20} & \multicolumn{2}{c}{27--27} & \multicolumn{2}{c}{26--27} & \multicolumn{2}{c}{18--20}\\
-edge error ($N{=}256$) & \multicolumn{2}{c}{$8.64\times10^{-6}$} & \multicolumn{2}{c}{$1.84\times10^{-5}$} & \multicolumn{2}{c}{$1.09\times10^{-5}$} & \multicolumn{2}{c}{$1.53\times10^{-5}$}\\
+16 & $3.89{\times}10^{-3}$ & -- & $5.99{\times}10^{-3}$ & --\\
+32 & $9.70{\times}10^{-4}$ & 2.00 & $1.49{\times}10^{-3}$ & 2.01\\
+64 & $2.42{\times}10^{-4}$ & 2.00 & $3.71{\times}10^{-4}$ & 2.00\\
+128 & $6.05{\times}10^{-5}$ & 2.00 & $9.27{\times}10^{-5}$ & 2.00\\
+256 & $1.51{\times}10^{-5}$ & 2.00 & $2.32{\times}10^{-5}$ & 2.00\\
+GMRES its & \multicolumn{2}{c}{26--27} & \multicolumn{2}{c}{18--20}\\
+edge error, $N{=}256$ & \multicolumn{2}{c}{$1.09{\times}10^{-5}$} & \multicolumn{2}{c}{$1.53{\times}10^{-5}$}\\
 \bottomrule
 \end{tabular}

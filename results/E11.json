@@ -1,0 +1,182 @@
+[
+ {
+  "bc": "D",
+  "rmax": 1.5,
+  "N": 16,
+  "samples": 1000,
+  "max_rel_imag": 0.0,
+  "nonneg": 0,
+  "max_condV": 3.1054140984701535,
+  "hratio_note": "global h_max/h_min <= e^14 ~ 1.2e6"
+ },
+ {
+  "bc": "D",
+  "rmax": 1.5,
+  "N": 64,
+  "samples": 400,
+  "max_rel_imag": 0.0,
+  "nonneg": 0,
+  "max_condV": 8.781158918231453,
+  "hratio_note": "global h_max/h_min <= e^14 ~ 1.2e6"
+ },
+ {
+  "bc": "D",
+  "rmax": 1.5,
+  "N": 256,
+  "samples": 60,
+  "max_rel_imag": 0.0,
+  "nonneg": 0,
+  "max_condV": 20.203005723299896,
+  "hratio_note": "global h_max/h_min <= e^14 ~ 1.2e6"
+ },
+ {
+  "bc": "D",
+  "rmax": 2.0,
+  "N": 16,
+  "samples": 1000,
+  "max_rel_imag": 0.0,
+  "nonneg": 0,
+  "max_condV": 4.3060060473877755,
+  "hratio_note": "global h_max/h_min <= e^14 ~ 1.2e6"
+ },
+ {
+  "bc": "D",
+  "rmax": 2.0,
+  "N": 64,
+  "samples": 400,
+  "max_rel_imag": 0.0,
+  "nonneg": 0,
+  "max_condV": 11.776486667889747,
+  "hratio_note": "global h_max/h_min <= e^14 ~ 1.2e6"
+ },
+ {
+  "bc": "D",
+  "rmax": 2.0,
+  "N": 256,
+  "samples": 60,
+  "max_rel_imag": 0.0,
+  "nonneg": 0,
+  "max_condV": 31.359314340049693,
+  "hratio_note": "global h_max/h_min <= e^14 ~ 1.2e6"
+ },
+ {
+  "bc": "D",
+  "rmax": 4.0,
+  "N": 16,
+  "samples": 1000,
+  "max_rel_imag": 0.0,
+  "nonneg": 0,
+  "max_condV": 6.3935246996325175,
+  "hratio_note": "global h_max/h_min <= e^14 ~ 1.2e6"
+ },
+ {
+  "bc": "D",
+  "rmax": 4.0,
+  "N": 64,
+  "samples": 400,
+  "max_rel_imag": 0.0,
+  "nonneg": 0,
+  "max_condV": 15.376432066085963,
+  "hratio_note": "global h_max/h_min <= e^14 ~ 1.2e6"
+ },
+ {
+  "bc": "D",
+  "rmax": 4.0,
+  "N": 256,
+  "samples": 60,
+  "max_rel_imag": 0.0,
+  "nonneg": 0,
+  "max_condV": 42.99898357581756,
+  "hratio_note": "global h_max/h_min <= e^14 ~ 1.2e6"
+ },
+ {
+  "bc": "N",
+  "rmax": 1.5,
+  "N": 16,
+  "samples": 1000,
+  "max_rel_imag": 0.0,
+  "nonneg": 0,
+  "max_condV": 4.41173351364736,
+  "hratio_note": "global h_max/h_min <= e^14 ~ 1.2e6"
+ },
+ {
+  "bc": "N",
+  "rmax": 1.5,
+  "N": 64,
+  "samples": 400,
+  "max_rel_imag": 0.0,
+  "nonneg": 0,
+  "max_condV": 14.849324566954214,
+  "hratio_note": "global h_max/h_min <= e^14 ~ 1.2e6"
+ },
+ {
+  "bc": "N",
+  "rmax": 1.5,
+  "N": 256,
+  "samples": 60,
+  "max_rel_imag": 0.0,
+  "nonneg": 0,
+  "max_condV": 25.60498157831523,
+  "hratio_note": "global h_max/h_min <= e^14 ~ 1.2e6"
+ },
+ {
+  "bc": "N",
+  "rmax": 2.0,
+  "N": 16,
+  "samples": 1000,
+  "max_rel_imag": 0.0,
+  "nonneg": 0,
+  "max_condV": 7.243014891726892,
+  "hratio_note": "global h_max/h_min <= e^14 ~ 1.2e6"
+ },
+ {
+  "bc": "N",
+  "rmax": 2.0,
+  "N": 64,
+  "samples": 400,
+  "max_rel_imag": 0.0,
+  "nonneg": 0,
+  "max_condV": 22.21540173122082,
+  "hratio_note": "global h_max/h_min <= e^14 ~ 1.2e6"
+ },
+ {
+  "bc": "N",
+  "rmax": 2.0,
+  "N": 256,
+  "samples": 60,
+  "max_rel_imag": 0.0,
+  "nonneg": 0,
+  "max_condV": 54.79712924337808,
+  "hratio_note": "global h_max/h_min <= e^14 ~ 1.2e6"
+ },
+ {
+  "bc": "N",
+  "rmax": 4.0,
+  "N": 16,
+  "samples": 1000,
+  "max_rel_imag": 0.0,
+  "nonneg": 0,
+  "max_condV": 10.940920991514009,
+  "hratio_note": "global h_max/h_min <= e^14 ~ 1.2e6"
+ },
+ {
+  "bc": "N",
+  "rmax": 4.0,
+  "N": 64,
+  "samples": 400,
+  "max_rel_imag": 0.0,
+  "nonneg": 0,
+  "max_condV": 35.1817881532107,
+  "hratio_note": "global h_max/h_min <= e^14 ~ 1.2e6"
+ },
+ {
+  "bc": "N",
+  "rmax": 4.0,
+  "N": 256,
+  "samples": 60,
+  "max_rel_imag": 0.0,
+  "nonneg": 0,
+  "max_condV": 100.26352189843821,
+  "hratio_note": "global h_max/h_min <= e^14 ~ 1.2e6"
+ }
+]

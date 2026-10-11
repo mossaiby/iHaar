@@ -1,11 +1,11 @@
-\begin{tabular}{l rcc c}
+\begin{tabular}{ll ccc}
 \toprule
-run & unknowns & max error vs.\ ref. & area error & CPU time/step\\
+grid & operator & max nodal error & area error & ms per step\\
 \midrule
-$256^2$, $D_2$ & 65536 & $1.36\times10^{-1}$ & $2.43\times10^{-4}$ & 1.6 ms\\
-$256^2$, $D_2^{(4)}$ & 65536 & $5.27\times10^{-2}$ & $6.07\times10^{-5}$ & 1.4 ms\\
-$512^2$, $D_2$ & 262144 & $4.12\times10^{-2}$ & $6.88\times10^{-5}$ & 9.5 ms\\
-$512^2$, $D_2^{(4)}$ & 262144 & $2.63\times10^{-3}$ & $4.23\times10^{-6}$ & 8.6 ms\\
-$1024^2$, $D_2^{(4)}$ (ref.) & 1048576 & -- & -- & 106 ms\\
+$256^2$ & $D_2$ & $1.36{\times}10^{-1}$ & $2.43{\times}10^{-4}$ & 2.4\\
+$256^2$ & $D_2^{(4)}$ & $5.27{\times}10^{-2}$ & $6.07{\times}10^{-5}$ & 2.4\\
+$512^2$ & $D_2$ & $4.12{\times}10^{-2}$ & $6.88{\times}10^{-5}$ & 15.1\\
+$512^2$ & $D_2^{(4)}$ & $2.63{\times}10^{-3}$ & $4.23{\times}10^{-6}$ & 14.0\\
+$1024^2$ (reference) & $D_2^{(4)}$ & -- & -- & 73\\
 \bottomrule
 \end{tabular}

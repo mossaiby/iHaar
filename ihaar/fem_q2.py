@@ -61,10 +61,18 @@ class Q2Mesh1D:
         return E.tocsr(), Ed.tocsr(), xq, wq
 
 
-def solve_q2(tx, ty, field, E=1.0, nu=0.3, dirichlet=("L", "R", "B", "T")):
+def solve_q2(tx, ty, field, E=1.0, nu=0.3, dirichlet=("L", "R", "B", "T"), solver="direct",
+             tol=1e-10, return_info=False):
     """Solve the plane-strain problem with exact Dirichlet data on the listed edges
-    (other edges traction free). Returns (relative H1 error, dofs, solve time)."""
+    (other edges traction free). Returns (relative H1 error, dofs, solve time).
+
+    solver = 'direct' : sparse direct (SuperLU)
+             'pcg'    : conjugate gradients preconditioned by block fast diagonalization of
+                        (lambda+2mu) Sx(x)My + mu Mx(x)Sy and mu Sx(x)My + (lambda+2mu) Mx(x)Sy
+                        on the free nodes -- the Galerkin analogue of the IHWC preconditioner.
+    With return_info=True also returns dict(its=..., setup=...)."""
     import time
+    import scipy.linalg as sla
     mx, my = Q2Mesh1D(tx), Q2Mesh1D(ty)
     lm = E * nu / ((1 + nu) * (1 - 2 * nu)); mu = E / (2 * (1 + nu))
     kron = sp.kron
@@ -84,9 +92,42 @@ def solve_q2(tx, ty, field, E=1.0, nu=0.3, dirichlet=("L", "R", "B", "T")):
     g = np.concatenate([np.where(bmask, ue, 0).ravel(), np.where(bmask, ve, 0).ravel()])
     free = ~fixed
     rhs = -K[free][:, fixed] @ g[fixed]
-    t0 = time.perf_counter()
-    sol = spla.spsolve(K[free][:, free].tocsc(), rhs)
-    tsolve = time.perf_counter() - t0
+    Kff = K[free][:, free].tocsr()
+    info = dict(its=0, setup=0.0)
+    if solver == "direct":
+        t0 = time.perf_counter()
+        sol = spla.spsolve(Kff.tocsc(), rhs)
+        tsolve = time.perf_counter() - t0
+    else:
+        # free node sets are tensor products of 1D free sets
+        fx = np.ones(nx, bool); fy = np.ones(ny, bool)
+        if "L" in dirichlet: fx[0] = False
+        if "R" in dirichlet: fx[-1] = False
+        if "B" in dirichlet: fy[0] = False
+        if "T" in dirichlet: fy[-1] = False
+        assert (bmask.ravel() == ~np.outer(fx, fy).ravel()).all()
+        t0 = time.perf_counter()
+        lx, Vx = sla.eigh(mx.S.toarray()[np.ix_(fx, fx)], mx.M.toarray()[np.ix_(fx, fx)])
+        ly, Vy = sla.eigh(my.S.toarray()[np.ix_(fy, fy)], my.M.toarray()[np.ix_(fy, fy)])
+        a, b = lm + 2 * mu, mu
+        Du = a * lx[:, None] + b * ly[None, :]; Dv = b * lx[:, None] + a * ly[None, :]
+        info["setup"] = time.perf_counter() - t0
+        mxf, myf = fx.sum(), fy.sum(); m = mxf * myf
+
+        def prec(r):
+            ru, rv = r[:m].reshape(mxf, myf), r[m:].reshape(mxf, myf)
+            zu = Vx @ ((Vx.T @ ru @ Vy) / Du) @ Vy.T
+            zv = Vx @ ((Vx.T @ rv @ Vy) / Dv) @ Vy.T
+            return np.concatenate([zu.ravel(), zv.ravel()])
+        t0 = time.perf_counter()
+        x = np.zeros_like(rhs); r = rhs.copy(); z = prec(r); p = z.copy(); rz = r @ z; bn = np.linalg.norm(rhs)
+        for it in range(5000):
+            Ap = Kff @ p; al = rz / (p @ Ap); x += al * p; r -= al * Ap
+            if np.linalg.norm(r) < tol * bn: break
+            z = prec(r); rz2 = r @ z; p = z + (rz2 / rz) * p; rz = rz2
+        info["its"] = it + 1
+        sol = x
+        tsolve = time.perf_counter() - t0
     w = g.copy(); w[free] = sol
     U, V = w[:n].reshape(nx, ny), w[n:].reshape(nx, ny)
     Ex, Edx, xq, wx = mx.eval_matrices(); Ey, Edy, yq, wy = my.eval_matrices()
@@ -96,4 +137,6 @@ def solve_q2(tx, ty, field, E=1.0, nu=0.3, dirichlet=("L", "R", "B", "T")):
         ax_ = Edx @ (Ey @ A.T).T; ay_ = Ex @ (Edy @ A.T).T
         num += (W * ((ax_ - gr[2 * c]) ** 2 + (ay_ - gr[2 * c + 1]) ** 2)).sum()
         den += (W * (gr[2 * c] ** 2 + gr[2 * c + 1] ** 2)).sum()
+    if return_info:
+        return float(np.sqrt(num / den)), int(free.sum()), tsolve, info
     return float(np.sqrt(num / den)), int(free.sum()), tsolve

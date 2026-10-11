@@ -1,4 +1,11 @@
-# ihaar — integrated-Haar wavelet collocation with fast tensor solvers
+# iHaar — integrated-Haar wavelet collocation with fast tensor solvers
+
+Repository: https://github.com/mossaiby/iHaar
+
+```
+git clone https://github.com/mossaiby/iHaar.git
+cd iHaar
+```
 
 Code, tests and reproduction scripts for the manuscript in `paper/manuscript.tex`.
 
@@ -19,7 +26,8 @@ experiments/run_all.py     every table/figure: E1 verification/cost, E2 elastici
                            E3 Allen–Cahn circle, E4/E5 Cahn–Hilliard 2D/3D, E7 traction BCs,
                            E7b traction on graded grids, E8a–E8d sharp interfaces (resolution, AC star,
                            thin-interface CH, plain vs stabilized SAV), E8fig figures,
-                           E9 FD/compact/spectral comparison, E10 Q2 FEM comparison, E6 timing
+                           E9 FD/compact/spectral comparison, E10 Q2 FEM comparison (direct and
+                           CG+FDM solvers), E11 spectrum on random graded grids, E6 timing
 requirements.txt / requirements-gpu.txt   dependencies (GPU file adds CuPy)
 experiments/make_tables.py LaTeX tables generated from results/*.json
 paper/               manuscript (elsarticle), generated tables, internal referee report
@@ -38,7 +46,7 @@ cd paper && latexmk -pdf manuscript.tex  # needs elsarticle.cls (TeX Live / CTAN
 ## GPU (required before submission)
 On a machine with an NVIDIA GPU (check with `nvidia-smi`):
 ```
-cd ihaar
+cd iHaar
 pip install -r requirements-gpu.txt          # CUDA 12.x; for CUDA 11.x edit to cupy-cuda11x
 python tests/test_gpu.py                     # CPU vs GPU agreement; must print "ALL OK"
 python experiments/run_all.py --only E6 --gpu   # writes results/E6_gpu.json (fp64 + fp32, GPU name, CUDA, CuPy)
