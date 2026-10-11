@@ -1,0 +1,8 @@
+# CPU requirements plus CuPy for GPU runs:
+#   pip install -r requirements-gpu.txt
+# Pick the wheel that matches your CUDA toolkit (check with `nvidia-smi`):
+#   CUDA 12.x -> cupy-cuda12x  (default below)
+#   CUDA 11.x -> replace with cupy-cuda11x
+# transform="dct" needs cupyx.scipy.fft.dctn; if your CuPy lacks it, use transform="gemm".
+-r requirements.txt
+cupy-cuda12x>=13.0

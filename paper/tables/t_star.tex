@@ -1,0 +1,11 @@
+\begin{tabular}{l rcc c}
+\toprule
+run & unknowns & max error vs.\ ref. & area error & CPU time/step\\
+\midrule
+$256^2$, $D_2$ & 65536 & $1.36\times10^{-1}$ & $2.43\times10^{-4}$ & 1.6 ms\\
+$256^2$, $D_2^{(4)}$ & 65536 & $5.27\times10^{-2}$ & $6.07\times10^{-5}$ & 1.4 ms\\
+$512^2$, $D_2$ & 262144 & $4.12\times10^{-2}$ & $6.88\times10^{-5}$ & 9.5 ms\\
+$512^2$, $D_2^{(4)}$ & 262144 & $2.63\times10^{-3}$ & $4.23\times10^{-6}$ & 8.6 ms\\
+$1024^2$, $D_2^{(4)}$ (ref.) & 1048576 & -- & -- & 106 ms\\
+\bottomrule
+\end{tabular}

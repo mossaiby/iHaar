@@ -1,0 +1,16 @@
+\begin{tabular}{r rcc rcc}
+\toprule
+ & \multicolumn{3}{c}{IHWC collocation (GMRES + FDM)} & \multicolumn{3}{c}{Q2 FEM (sparse direct)}\\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}
+cells & DOFs & $e_{H^1}$ & solve (s) & DOFs & $e_{H^1}$ & solve (s)\\
+\midrule
+64 & 144 & $1.23\times10^{-1}$ & 0.00 & 480 & $7.22\times10^{-2}$ & 0.00\\
+130 & 280 & $6.68\times10^{-2}$ & 0.00 & 988 & $5.39\times10^{-2}$ & 0.00\\
+252 & 532 & $3.22\times10^{-2}$ & 0.00 & 1944 & $2.61\times10^{-2}$ & 0.01\\
+750 & 1550 & $1.05\times10^{-2}$ & 0.01 & 5880 & $8.43\times10^{-3}$ & 0.04\\
+2444 & 4982 & $3.42\times10^{-3}$ & 0.01 & 19344 & $2.73\times10^{-3}$ & 0.24\\
+8004 & 16182 & $1.11\times10^{-3}$ & 0.03 & 63664 & $8.80\times10^{-4}$ & 1.72\\
+24327 & 48960 & $3.59\times10^{-4}$ & 0.08 & 193980 & $2.84\times10^{-4}$ & 10.62\\
+74236 & 149008 & $1.17\times10^{-4}$ & 0.20 & -- & -- & --\\
+\bottomrule
+\end{tabular}

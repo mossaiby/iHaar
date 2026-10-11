@@ -1,0 +1,9 @@
+# Core dependencies (CPU). Tested with numpy 2.4, scipy 1.17, matplotlib 3.10.
+numpy>=1.24
+scipy>=1.10        # scipy.fft.dctn, scipy.linalg.solve_sylvester
+matplotlib>=3.6    # figures in experiments/run_all.py
+
+# Optional: GPU runs (NVIDIA, CUDA 12.x). Uncomment ONE line matching your CUDA
+# toolkit, or install requirements-gpu.txt instead.
+# cupy-cuda12x>=13.0
+# cupy-cuda11x>=13.0
