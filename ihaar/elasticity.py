@@ -20,6 +20,43 @@ OMEGA = 1.5 * np.pi
 LAM_I = 0.5444837367824632  # root of sin(l*omega) + l*sin(omega) = 0
 
 
+def mode1_exponent(omega):
+    """Smallest positive root of sin(l*omega) + l*sin(omega) = 0 (Mode I, opening omega)."""
+    from scipy.optimize import brentq
+    f = lambda l: np.sin(l * omega) + l * np.sin(omega)
+    ls = np.linspace(0.05, 1.5, 3000); v = f(ls)
+    k = np.where(np.sign(v[:-1]) != np.sign(v[1:]))[0][0]
+    return brentq(f, ls[k], ls[k + 1])
+
+
+class SumField:
+    """Superposition of exact fields (linear elasticity)."""
+    def __init__(self, *fields): self.fields = fields
+    def disp(self, x, y):
+        r = [f.disp(x, y) for f in self.fields]; return sum(a for a, _ in r), sum(b for _, b in r)
+    def grad(self, x, y):
+        r = [f.grad(x, y) for f in self.fields]; return tuple(sum(c[i] for c in r) for i in range(4))
+
+
+class BoundaryLayerField:
+    """Smooth manufactured field with boundary layers of width delta at x=1 and y=1."""
+    def __init__(self, delta=0.01, E=1.0, nu=0.3):
+        self.d = delta; self.G = E / (2 * (1 + nu)); self.lmb = E * nu / ((1 + nu) * (1 - 2 * nu))
+    def _g(self, t): return np.exp(-(1 - t) / self.d)
+    def disp(self, x, y):
+        return self._g(x) * np.sin(np.pi * y), np.sin(np.pi * x) * self._g(y)
+    def grad(self, x, y):
+        d, p = self.d, np.pi
+        return (self._g(x) / d * np.sin(p * y), self._g(x) * p * np.cos(p * y),
+                p * np.cos(p * x) * self._g(y), np.sin(p * x) * self._g(y) / d)
+    def body(self, x, y):
+        d, p, l, m = self.d, np.pi, self.lmb, self.G
+        gx, gy, sx, sy = self._g(x), self._g(y), np.sin(p * x), np.sin(p * y)
+        uxx, uyy, uxy = gx / d**2 * sy, -p * p * gx * sy, gx / d * p * np.cos(p * y)
+        vxx, vyy, vxy = -p * p * sx * gy, sx * gy / d**2, p * np.cos(p * x) * gy / d
+        return (-((l + 2 * m) * uxx + m * uyy + (l + m) * vxy), -(m * vxx + (l + 2 * m) * vyy + (l + m) * uxy))
+
+
 class WilliamsField:
     """Mode-I Williams field via Kolosov-Muskhelishvili potentials
     phi = z^l, psi = b z^l (local coordinates, bisector on the real axis):
@@ -27,13 +64,15 @@ class WilliamsField:
     Equilibrium holds identically; b makes both wedge faces traction free.
     """
 
-    def __init__(self, E=1.0, nu=0.3, apex=(1.0, 1.0), bisector=1.25 * np.pi, scale=1.0):
+    def __init__(self, E=1.0, nu=0.3, apex=(1.0, 1.0), bisector=1.25 * np.pi, scale=1.0, omega=None):
         self.E, self.nu = E, nu
         self.G = E / (2 * (1 + nu))
         self.lmb = E * nu / ((1 + nu) * (1 - 2 * nu))
         self.kappa = 3 - 4 * nu
-        l = LAM_I
-        al = OMEGA / 2
+        omega = OMEGA if omega is None else omega
+        l = LAM_I if omega == OMEGA else mode1_exponent(omega)
+        al = omega / 2
+        self.omega = omega
         self.l = l
         self.b = -(l + 1) * np.cos((l - 1) * al) / np.cos((l + 1) * al)
         self.apex, self.bis, self.s = complex(*apex), bisector, scale

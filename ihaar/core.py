@@ -285,3 +285,54 @@ class NeumannDCT:
 
     def solve_diag(self, F, symbol):
         return self.from_hat(self.to_hat(F) / symbol)
+
+
+# --------------------------------------------------------------------------
+# Safeguarded 2D Sylvester solver: fast diagonalization with a fallback
+# --------------------------------------------------------------------------
+class SafeguardedSylvester:
+    """Solve a*Dx U + b*U Dy^T + g*U = F.
+
+    Fast diagonalization (FDM) is used when the eigenvector condition numbers are
+    below `kappa_max`; after each FDM solve the normwise backward error
+        eta = ||R|| / (|a| ||Dx|| ||U|| + |b| ||Dy|| ||U|| + |g| ||U|| + ||F||)
+    is checked (two extra matrix products), and if eta > `eta_max` the solve is
+    repeated with the backward-stable Bartels--Stewart algorithm. Theorem
+    (spectrum on every grid) guarantees that FDM is always *defined*; this class
+    guards its *numerical* reliability. Attributes record which path was taken.
+    """
+
+    def __init__(self, Dx, Dy, a=1.0, b=1.0, g=0.0, kappa_max=1e6, eta_max=1e-12):
+        self.Dx, self.Dy, self.a, self.b, self.g = Dx, Dy, a, b, g
+        self.kappa_max, self.eta_max = kappa_max, eta_max
+        self.nDx, self.nDy = np.linalg.norm(Dx, 2), np.linalg.norm(Dy, 2)
+        try:
+            ex, ey = Eig1D(Dx), Eig1D(Dy)
+            self.kappa = max(ex.condV, ey.condV)
+        except ValueError:
+            ex = ey = None; self.kappa = np.inf
+        self.use_fdm = self.kappa <= kappa_max
+        if self.use_fdm:
+            self.fdm = TensorFDM([ex, ey])
+            self.sym = a * self.fdm.lams[0][:, None] + b * self.fdm.lams[1][None, :] + g
+        self.n_fdm = self.n_fallback = 0
+        self.last_eta = None
+
+    def backward_error(self, U, F):
+        R = self.a * self.Dx @ U + self.b * U @ self.Dy.T + self.g * U - F
+        nu = np.linalg.norm(U)
+        return np.linalg.norm(R) / ((abs(self.a) * self.nDx + abs(self.b) * self.nDy + abs(self.g)) * nu + np.linalg.norm(F))
+
+    def solve(self, F):
+        if self.use_fdm:
+            U = self.fdm.solve_diag(F, self.sym)
+            self.last_eta = self.backward_error(U, F)
+            if self.last_eta <= self.eta_max:
+                self.n_fdm += 1
+                return U
+        A = self.a * self.Dx + 0.5 * self.g * np.eye(self.Dx.shape[0])
+        B = self.b * self.Dy + 0.5 * self.g * np.eye(self.Dy.shape[0])
+        U = sla.solve_sylvester(A, B.T, F)
+        self.last_eta = self.backward_error(U, F)
+        self.n_fallback += 1
+        return U

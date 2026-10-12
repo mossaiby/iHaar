@@ -181,13 +181,70 @@ bot = tab("l cc cc", "& \\multicolumn{2}{c}{max nodal error} & \\multicolumn{2}{
 w("t_compare", stack(part("(a) Smooth Cahn--Hilliard, max error against a pseudo-spectral reference ($N=486$)", top),
                      part("(b) Allen--Cahn star, $\\varepsilon=0.004$, against the IHWC $D_2^{(4)}$ reference ($1024^2$)", bot)))
 E10 = R("E10"); A = E10["adaptive"]; sel = A[::3] + ([A[-1]] if (len(A) - 1) % 3 else [])
-top = tab("rr cc r", "cycle & cells & unknowns & $e_{H^1}$ & time (s)", [f"{r['cycle']} & {r['cells']} & {r['ihwc_dofs']} & {sci(r['ihwc_e'])} & {r['ihwc_t']:.2f}" for r in sel])
-bot = tab("r rc cc", "cycle & unknowns & $e_{H^1}$ & CG + FDM (s) & sparse direct (s)",
-          [f"{r['cycle']} & {r['q2_dofs']} & {sci(r['q2_e'])} & {r['q2pcg_t']:.2f} & " + ("%.2f" % r["q2direct_t"] if "q2direct_t" in r else "--") for r in sel])
-w("t_q2", stack(part("(a) IHWC collocation, GMRES with the FDM preconditioner", top),
-                part("(b) $Q_2$ finite elements on the same grids", bot)))
+mb = lambda x: "%.1f" % (x / 1e6)
+top = tab("rr c ccc", "cycle & unknowns & $e_{H^1}$ & setup (s) & solve (s) & memory (MB)",
+          [f"{r['cycle']} & {r['ihwc_dofs']} & {sci(r['ihwc_e'])} & {r['ihwc_setup']:.2f} & {r['ihwc_t']:.2f} & {mb(r['ihwc_mem'])}" for r in sel])
+bot = tab("rr c cccc", "cycle & unknowns & $e_{H^1}$ & assembly (s) & setup + CG (s) & memory (MB) & direct (s)",
+          [f"{r['cycle']} & {r['q2_dofs']} & {sci(r['q2_e'])} & {r['q2_assembly']:.2f} & {r['q2pcg_setup'] + r['q2pcg_t']:.2f} & {mb(r['q2pcg_mem'])} & "
+           + ("%.2f" % r["q2direct_t"] if "q2direct_t" in r else "--") for r in sel])
+w("t_q2", stack(part("(a) IHWC collocation: GMRES with the FDM preconditioner", top),
+                part("(b) $Q_2$ finite elements on the same grids: CG with the FDM preconditioner, and sparse direct solve", bot)))
+if have("E12"):
+    E12 = R("E12")
+    w("t_fdmstab", tab("cr r c ccc", "& & & & \\multicolumn{2}{c}{backward error} & solution\\\\\nratio & $N$ & $h_{\\max}/h_{\\min}$ & $\\kappa(V)$ & FDM & B--S & difference",
+                       [f"{r['rmax']:g} & {r['N']} & {sci(r['hratio'],1)} & {r['condV']:.1f} & {sci(r['backward_fdm'],1)} & {sci(r['backward_bs'],1)} & {sci(r['rel_diff'],1)}" for r in E12["fdm_vs_bs"]]))
 if have("E11"):
     E11 = R("E11")
     w("t_spectrum", tab("cc r r cc", "ends & ratio bound & $N$ & grids & max $|\\mathrm{Im}\\,\\lambda|/|\\lambda|$ & max $\\kappa(V)$",
                         [f"{'values' if r['bc']=='D' else 'zero slope'} & {r['rmax']:g} & {r['N']} & {r['samples']} & {r['max_rel_imag']:.1e} & {r['max_condV']:.1f}" for r in E11]))
 print("all tables written")
+
+# ---------------- revision 3: robustness, 3D, S study, adaptivity, environment -----------
+if have("E17"):
+    E17 = R("E17")
+    lab = {"alternating_10": "alternating, ratio 10", "alternating_100": "alternating, ratio 100", "alternating_1000": "alternating, ratio 1000",
+           "tiny_ends_1e-6": "end cells $10^{-6}$", "geometric_1e6": "geometric, $10^6$", "geometric_1e12": "geometric, $10^{12}$",
+           "random_unbounded": "random, unbounded", "cluster": "cluster of $10^{-4}$ cells"}
+    rows = [f"{lab[r['family']]} & {'values' if r['bc']=='D' else 'slope'} & {sci(r['hratio'],0)} & {r['condV']:.1f} & {sci(r['eta_fdm'],0)} & {sci(r['eta_bs'],0)} & {sci(r['rel_diff'],0)}"
+            for r in E17["adversarial"] if r["N"] == 256]
+    w("t_adversarial", tab("p{3.3cm}c c c ccc", "& & & & \\multicolumn{2}{c}{backward error} & solution\\\\\ngrid family ($N=256$) & ends & $h_{\\max}/h_{\\min}$ & $\\kappa(V)$ & FDM & B--S & difference", rows))
+    w("t_fallback", tab("r ccc", "$N$ & FDM with check (s) & Bartels--Stewart (s) & ratio",
+                        [f"{c['N']} & {c['fdm_with_check']:.4f} & {c['bartels_stewart']:.4f} & {c['ratio']:.1f}" for c in E17["cost"]]))
+if have("E14"):
+    E14 = R("E14")
+    def r3(g):
+        L_ = [r for r in E14 if r["grid"] == g]
+        return [f"{r['N']} & {r['unknowns']} & {sci(r['err'])} & {'--' if i==0 else rate(L_[i-1]['err'], r['err'], L_[i-1]['N'], r['N'])} & {r['time']:.4f}" for i, r in enumerate(L_)]
+    w("t_3d", stack(part("(a) Uniform grids", tab("rr cc c", "$N$ & unknowns & max error & rate & solve (s)", r3("uniform"))),
+                    part("(b) Chebyshev-graded grids", tab("rr cc c", "$N$ & unknowns & max error & rate & solve (s)", r3("graded")))))
+if have("E15"):
+    E15 = sorted(R("E15"), key=lambda r: (r["dt_over_eps2"], r["S"]))
+    w("t_Ssens", tab("cc ccc", "$\\Delta t/\\varepsilon^2$ & $S$ & $\\max_n|u_h|$ & error vs.\\ reference & $\\xi$ at $T$",
+                     [f"{r['dt_over_eps2']} & {r['S']:g} & {r['umax']:.3f} & {sci(r['err'])} & {r['xi']:.5f}" for r in E15]))
+if have("E16"):
+    E16 = R("E16")
+    nm = lambda k: (k.replace("face_omega_", "face, $\\omega=").replace("pi", "\\pi$") if k.startswith("face") else k.replace("_", " "))
+    top = tab("l c c cc cc", "case & $\\lambda$ & uniform $128^2$ & \\multicolumn{2}{c}{indicator: error, rate} & \\multicolumn{2}{c}{oracle: error, rate}",
+              [f"{nm(k)} & {'--' if v['lam'] is None else '%.3f' % v['lam']} & {sci(v['uniform128']['eH1'])} & {sci(v['indicator']['rows'][-1]['eH1'])} & {v['indicator']['rate']:.2f} & {sci(v['oracle']['rows'][-1]['eH1'])} & {v['oracle']['rate']:.2f}" for k, v in E16.items()])
+    bot = tab("l c c c c", "case & effectivity range $\\eta/e$ & cycles & final unknowns & total time (s)",
+              [f"{nm(k)} & {v['indicator']['eff_min']:.2f}--{v['indicator']['eff_max']:.2f} & {v['indicator']['cycles']} & {v['indicator']['rows'][-1]['dofs']} & {v['indicator']['time']:.1f}" for k, v in E16.items()])
+    w("t_adapt", stack(part("(a) Final relative $H^1$ error and fitted rate (about $6\\times10^4$ unknowns)", top),
+                       part("(b) Indicator effectivity, number of refinement cycles, and total setup and solve time", bot)))
+if have("environment"):
+    env = R("environment")
+    w("t_env", tab("p{3.2cm}p{10.4cm}", "item & value", [
+        f"CPU & {env['cpu']}, {env['logical_cpus']} logical core(s)", f"operating system & {env['os']}",
+        f"software & Python {env['python']}, NumPy {env['numpy']}, SciPy {env['scipy']}", f"BLAS/LAPACK & {env['blas']}",
+        "threads & one (the virtual machine exposes a single core)",
+        "timing protocol & wall-clock time (\\texttt{time.perf\\_counter}); solve times are medians of 3 to 5 repetitions; setup and assembly are reported separately and are not amortized"]))
+print("revision-3 tables written")
+
+# ---------------- AMG note (E13 requires pyamg) ------------------------
+if have("E13"):
+    A13 = R("E13"); r = A13[-1]
+    amg = (f"With smoothed-aggregation algebraic multigrid (pyamg) as preconditioner for $Q_2$ on the same grids, "
+           f"the finest run ({r['q2_dofs']} unknowns) takes {r['amg_setup']:.2f}~s setup and {r['amg_solve']:.2f}~s solve "
+           f"with {r['amg_its']} CG iterations; the complete sequence is in \\url{{results/E13.json}}.")
+else:
+    amg = "\\todo{AMG baseline pending: \\texttt{pip install pyamg}, then run E13 (see README).}"
+open(os.path.join(T, "amg_note.tex"), "w").write(amg + "\n")

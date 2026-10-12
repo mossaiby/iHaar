@@ -1,0 +1,28 @@
+\textit{(a) Final relative $H^1$ error and fitted rate (about $6\times10^4$ unknowns)}\\[2pt]
+\begin{tabular}{l c c cc cc}
+\toprule
+case & $\lambda$ & uniform $128^2$ & \multicolumn{2}{c}{indicator: error, rate} & \multicolumn{2}{c}{oracle: error, rate}\\
+\midrule
+face, $\omega=1.25\pi$ & 0.674 & $1.06{\times}10^{-2}$ & $7.85{\times}10^{-5}$ & -1.05 & $4.37{\times}10^{-5}$ & -1.00\\
+face, $\omega=1.50\pi$ & 0.544 & $2.72{\times}10^{-2}$ & $2.47{\times}10^{-4}$ & -0.98 & $1.04{\times}10^{-4}$ & -0.98\\
+face, $\omega=1.75\pi$ & 0.505 & $3.17{\times}10^{-2}$ & $2.97{\times}10^{-4}$ & -0.96 & $1.27{\times}10^{-4}$ & -0.99\\
+face, $\omega=1.95\pi$ & 0.500 & $2.97{\times}10^{-2}$ & $2.18{\times}10^{-4}$ & -0.96 & $1.25{\times}10^{-4}$ & -0.98\\
+two singularities & 0.544 & $4.11{\times}10^{-2}$ & $5.44{\times}10^{-4}$ & -0.95 & $3.85{\times}10^{-4}$ & -0.92\\
+boundary layer & -- & $3.23{\times}10^{-2}$ & $6.85{\times}10^{-5}$ & -1.00 & $2.83{\times}10^{-4}$ & -0.87\\
+\bottomrule
+\end{tabular}
+
+\medskip
+\textit{(b) Indicator effectivity, number of refinement cycles, and total setup and solve time}\\[2pt]
+\begin{tabular}{l c c c c}
+\toprule
+case & effectivity range $\eta/e$ & cycles & final unknowns & total time (s)\\
+\midrule
+face, $\omega=1.25\pi$ & 2.00--5.83 & 18 & 70488 & 0.7\\
+face, $\omega=1.50\pi$ & 1.65--4.04 & 20 & 71392 & 0.8\\
+face, $\omega=1.75\pi$ & 1.84--3.88 & 22 & 69190 & 0.8\\
+face, $\omega=1.95\pi$ & 1.92--5.05 & 23 & 69190 & 0.8\\
+two singularities & 1.18--4.05 & 20 & 80520 & 1.0\\
+boundary layer & 0.25--15.64 & 23 & 81608 & 0.7\\
+\bottomrule
+\end{tabular}

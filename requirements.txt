@@ -2,8 +2,10 @@
 numpy>=1.24
 scipy>=1.10        # scipy.fft.dctn, scipy.linalg.solve_sylvester
 matplotlib>=3.6    # figures in experiments/run_all.py
+pyamg>=5.0         # AMG-preconditioned Q2 FEM baseline (experiment E13)
 
-# Optional: GPU runs (NVIDIA, CUDA 12.x). Uncomment ONE line matching your CUDA
-# toolkit, or install requirements-gpu.txt instead.
+# Optional: GPU runs (NVIDIA). Prefer `pip install -r requirements-gpu.txt`, or uncomment ONE
+# line matching the major version of your CUDA Toolkit (`nvcc --version`):
+# cupy-cuda13x>=14.0
 # cupy-cuda12x>=13.0
 # cupy-cuda11x>=13.0

@@ -15,12 +15,12 @@
 \newcommand{\step}[1]{\par\noindent\hangindent=1.5em\hangafter=1\textbf{Step #1.}\ }
 \setlength{\emergencystretch}{2.5em}
 \newcommand{\repo}{\url{https://github.com/mossaiby/iHaar}}
+\newcommand{\archive}{\todo{Zenodo DOI of the tagged release v1.0}}
 \journal{Computer Methods in Applied Mechanics and Engineering}
 
 \begin{document}
 \begin{frontmatter}
-\title{Fast and structure-preserving integrated-Haar wavelet collocation: tensor solvers,
-phase-field models with sharp interfaces, and adaptive elastostatics}
+\title{Real spectra and fast tensor solvers for integrated-Haar (quadratic-spline) collocation on graded grids}
 
 \author[inst1]{Farshid Mossaiby\corref{cor1}}
 \ead{mossaiby@eng.ui.ac.ir}
@@ -29,26 +29,22 @@ phase-field models with sharp interfaces, and adaptive elastostatics}
             city={Isfahan}, postcode={81744-73441}, country={Iran}}
 
 \begin{abstract}
-The Haar wavelet collocation method (HWCM) is widely used in engineering because it is simple to
-derive and to program, but in two and three dimensions it leads to large dense systems, it is limited
-to second-order accuracy, and it offers no stability guarantees for nonlinear problems. This paper
-shows that all three limitations can be removed by rewriting the method in terms of nodal values. An
-exact three-term relation between nodal values and Haar coefficients replaces the dense HWCM matrices
-by tridiagonal ones. We prove that the resulting second-derivative operator has real, simple,
-nonpositive eigenvalues on \emph{every} grid, uniform or graded. Two- and three-dimensional problems
-can therefore always be solved by fast diagonalization, which on uniform grids reduces to fast cosine
-transforms. On uniform grids the operator is symmetric, and a correction that costs nothing extra raises
-its accuracy to fourth order. On this basis we construct Allen--Cahn and Cahn--Hilliard solvers that
-conserve mass exactly and are energy-stable for any time step, and that resolve interfaces as thin as
-about two grid nodes per $\sqrt2\varepsilon$ on $1024^2$ grids. For plane elastostatics with
-prescribed displacements and tractions, a preconditioned Krylov solver converges in a number of
-iterations independent of the mesh, and an anisotropic refinement driven by Haar detail coefficients
-recovers the optimal convergence rate at Mode-I corner singularities. Compared with biquadratic finite
-elements on the same grids and with an equally efficient solver, the method reaches a given accuracy
-with about one quarter of the unknowns and in about half the time. We also identify where it is not
-the best choice: for smooth problems on uniform boxes, pseudo-spectral methods are more accurate. The
-code that produces every result is openly available.
+Fast diagonalization solves separable problems on tensor grids with a few dense matrix products, but it
+requires one-dimensional operators that are diagonalizable with real eigenvalues. Collocation operators
+on graded grids are not symmetric, so this property must be proved. We prove it for the Haar wavelet
+collocation method (HWCM), which in nodal form is midpoint quadratic-spline collocation. An exact
+three-term identity writes its second-derivative operator as $A^{-1}L$ with tridiagonal $A$ and $L$; by
+oscillation-matrix theory, this operator has real, simple and nonpositive eigenvalues on every grid and
+for any combination of prescribed-value and zero-slope ends. Fast diagonalization is therefore always
+well defined. Its numerical reliability is not covered by the theorem, so we test it on adversarial grids
+(cell-size ratios up to $10^{12}$) and pair it with an inexpensive backward-error safeguard. We demonstrate
+the consequences in two and three dimensions: a free fourth-order correction on uniform grids,
+mass-conserving phase-field schemes with a provable modified-energy law, and adaptive plane elastostatics
+with traction boundaries. Against biquadratic finite elements on identical grids and with the same solver
+class, the method needs a quarter of the unknowns for a given accuracy. Pseudo-spectral methods remain
+preferable on uniform boxes, and the elasticity formulation is limited to compressible materials.
 \end{abstract}
+
 
 \begin{keyword}
 Haar wavelet collocation \sep quadratic spline collocation \sep fast diagonalization \sep
@@ -73,35 +69,76 @@ differential equations~\cite{ratas2021solving}. Non-uniform Haar
 wavelets~\cite{dubeau2004nonuniform,lepik2008nonuniform} have been used on graded grids, including
 two-dimensional problems with boundary layers~\cite{oruc2019nonuniform}.
 
-Three limitations recur in this literature. In two dimensions, all collocation equations are usually
-assembled into one dense matrix of size $N^2\times N^2$~\cite{lepik2011solving,oruc2019nonuniform}.
-Its factorization costs $O(N^6)$ operations, which becomes impractical beyond about $64\times64$
-cells. Graded grids are chosen in advance, for example through a grading parameter that has to be
-re-tuned for every value of a small physical parameter~\cite{oruc2019nonuniform}. Finally, there is no
-stability theory for nonlinear time-dependent problems, and in particular no HWCM for phase-field models
-with guaranteed energy decay and mass conservation.
-
-\paragraph{Central thesis}
-The integrated-Haar trial space consists of continuous piecewise-quadratic functions with continuous
-slopes. HWCM is therefore a quadratic-spline collocation (QSC)
-method~\cite{houstis1988quadratic,christara1994quadratic,christara2006optimal,christara2002fast},
-and it uses the same function space as quadratic isogeometric
+In nodal form, the integrated-Haar trial space consists of continuous piecewise-quadratic functions
+with continuous slopes. HWCM is therefore a midpoint quadratic-spline collocation (QSC)
+method~\cite{houstis1988quadratic,christara1994quadratic,christara2006optimal,christara2002fast}, and it
+uses the same function space as quadratic isogeometric
 collocation~\cite{auricchio2010isogeometric,schillinger2013isogeometric,anitescu2015isogeometric,gomez2016variational}.
-Our thesis is that one structural fact, which we prove for every grid, is what makes HWCM fast,
-stable and adaptive: written in nodal form, the collocation second-derivative operator is the product
-of two tridiagonal matrices whose combination has real, simple, nonpositive eigenvalues. Fast tensor
-solvers, the energy analysis of the phase-field schemes, the refinement strategy, and the
-preconditioners for elasticity are all consequences of this structure. The three applications serve
-as evidence of how far it reaches.
+Much of what HWCM lacks, such as second-order convergence theory or higher-order variants, is
+therefore already available in the QSC literature. The research gap addressed here is different, and
+it concerns fast solvers on graded grids.
+
+\paragraph{Research gap}
+Fast tensor solvers are among the main reasons to use structured discretizations, and two families
+exist. Fourier-type solvers for QSC~\cite{christara2002fast} require uniform grids. Fast diagonalization
+works on graded tensor grids, but it requires each one-dimensional operator to be diagonalizable with
+real eigenvalues~\cite{lynch1964direct}. For Galerkin discretizations, including isogeometric ones, the
+operators are symmetric pencils of stiffness and mass matrices, and the property is
+automatic~\cite{sangalli2016isogeometric}. Collocation operators are generally not symmetric, and for them the property has to be proved. For
+orthogonal spline collocation (OSC) with Hermite cubics at Gauss points, real and distinct eigenvalues of
+the one-dimensional collocation pencil were established by Dyksen~\cite{dyksen1987tensor} and analysed for
+arbitrary collocation points by Sun~\cite{sun1999spectral}; they underlie the matrix decomposition
+algorithms (MDAs) of Bialecki and Fairweather~\cite{bialecki1995matrix,bialecki2011matrix}, which are fast
+diagonalization in another name. For QSC, MDAs and Fourier solvers have been developed on uniform
+partitions~\cite{christara2002fast,bialecki2011matrix}. To our knowledge, a corresponding spectral guarantee
+has not been established for midpoint QSC, equivalently nodal HWCM, on arbitrary non-uniform partitions,
+nor for quadratic isogeometric collocation on arbitrary knot vectors. For midpoint QSC the operator is not
+symmetric on graded grids, and it is not symmetrized by the quadrature weights, so a different argument is
+needed. Existing analyses of non-uniform
+QSC establish existence, uniqueness and convergence under conditions on the
+partition~\cite{christara2006optimal}, but not the spectral structure that fast diagonalization needs.
+Without such a guarantee, fast diagonalization on adaptively generated grids is a heuristic that may
+fail through complex or defective spectra. The alternative, the Schur-based Bartels--Stewart
+algorithm~\cite{bartels1972solution}, is backward stable but sequential and harder to map onto GPUs.
+
+\paragraph{Central result and thesis}
+Our central result (Theorem~\ref{thm:spectrum}) closes this gap for midpoint QSC and HWCM. On every grid, and for every
+combination of end conditions, the collocation second-derivative operator $D_2=A^{-1}L$ has real,
+simple and nonpositive eigenvalues. The proof combines an exact three-term identity, which exposes
+$A$ and $L$ as tridiagonal matrices, with the theory of oscillation
+matrices~\cite{gantmacher2002oscillation,fallat2011totally}. Total positivity of spline collocation
+matrices is classical~\cite{karlin1968total,deboor2001practical}, and we use it in the form needed here.
+The thesis of the paper is that this structure is what makes HWCM fast, stable and adaptive on graded
+grids. We test three consequences of it, each in its own application. The first is fast diagonalization that is well defined on arbitrary graded grids, including those generated adaptively, and numerically reliable under an explicit safeguard (Sections~\ref{sec:tensor}
+and~\ref{sec:results}). The second is structure-preserving phase-field schemes, which on uniform grids,
+where the operator is also symmetric, admit an energy law and a free fourth-order correction
+(Section~\ref{sec:pf}). The third is adaptive elastostatics with traction conditions, where the same
+fast solver serves as a preconditioner on strongly graded anisotropic grids (Section~\ref{sec:elast}).
+Table~\ref{tab:closest} compares the method with the closest existing approaches.
+
+\begin{table}[t]\centering\footnotesize
+\caption{Comparison with the closest spline-collocation approaches, to the best of our knowledge. ``Spectrum'' refers to the one-dimensional collocation operator used by fast diagonalization or matrix decomposition.}\label{tab:closest}
+\begin{tabular}{p{2.2cm}p{2.6cm}p{2.0cm}p{3.4cm}p{2.6cm}}
+\toprule
+Method & Trial space and collocation points & Grids & Spectrum & Fast solver\\
+\midrule
+Classical HWCM~\cite{lepik2011solving,oruc2019nonuniform} & integrated Haar ($C^1$ quadratics); midpoints & uniform or a~priori graded & not analysed & none (dense $N^2\times N^2$ solve)\\
+Hermite-cubic OSC~\cite{dyksen1987tensor,sun1999spectral,bialecki1995matrix} & $C^1$ cubics; two Gauss points per cell & partitions as in the cited works & real, distinct eigenvalues established & matrix decomposition (MDA), FFT on uniform grids\\
+QSC~\cite{houstis1988quadratic,christara2002fast,christara2006optimal} & $C^1$ quadratics; midpoints (optimal variants perturbed) & uniform; non-uniform analysed for convergence & symmetric with trigonometric eigenvectors on uniform grids & FFT and MDA on uniform grids\\
+Quadratic IGA collocation~\cite{auricchio2010isogeometric,schillinger2013isogeometric,delorenzis2015isogeometric} & B-splines; Greville or superconvergent points & arbitrary knots; local refinement & not established for collocation; Galerkin pencils symmetric~\cite{sangalli2016isogeometric} & direct or Krylov; FDM for the Galerkin counterpart\\
+This work & $C^1$ quadratics; midpoints & arbitrary graded tensor grids & real, simple, nonpositive on every grid (Thm.~\ref{thm:spectrum}) & FDM on any tensor grid, with a safeguard; DCT/DST on uniform grids\\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \paragraph{What is inherited and what is new}
-Several ingredients of this paper are established, and we use them as such. These are the uniform-grid
-QSC relation~\cite{houstis1988quadratic}, QSC on non-uniform partitions and its one-dimensional
-adaptive variants~\cite{christara2006optimal,christara2006adaptive}, fast diagonalization of separable
-operators~\cite{lynch1964direct}, the scalar auxiliary variable (SAV) method~\cite{shen2018scalar},
-D\"orfler marking~\cite{dorfler1996convergent}, and the theory of oscillation matrices~\cite{gantmacher2002oscillation}.
-Table~\ref{tab:novelty} lists, for each part of the method, what we take from the literature and what
-we add.
+Several ingredients of this paper are established, and we use them as such: the uniform-grid QSC
+relation~\cite{houstis1988quadratic}, non-uniform and adaptive QSC~\cite{christara2006optimal,christara2006adaptive},
+fast diagonalization~\cite{lynch1964direct}, the scalar auxiliary variable (SAV)
+method~\cite{shen2018scalar}, D\"orfler marking~\cite{dorfler1996convergent}, and oscillation-matrix
+theory~\cite{gantmacher2002oscillation}. Table~\ref{tab:novelty} lists, for each part of the method, what
+we take from the literature and what we add. The decisive new element is Theorem~\ref{thm:spectrum}; the
+other new elements are consequences of it, or are made practical by it.
 
 \begin{table}[t]\centering\small
 \caption{Inherited ingredients and new contributions.}\label{tab:novelty}
@@ -112,7 +149,7 @@ Topic & Inherited & New in this paper\\
 Operators & Uniform-grid QSC relation~\cite{houstis1988quadratic}; non-uniform optimal QSC~\cite{christara2006optimal}. & Exact three-term identity in HWCM variables, with end rows, giving $O(N)$ assembly; unique solvability on every grid. \\
 Spectrum & Fast diagonalization assumes a diagonalizable operator~\cite{lynch1964direct}. & Proof that the operator has real, simple, nonpositive eigenvalues on every grid (Theorem~\ref{thm:spectrum}), so fast diagonalization always applies. \\
 Accuracy & Higher-order HWCM~\cite{majak2018higher}; optimal QSC~\cite{christara1994quadratic}; compact differences. & A fourth-order correction that keeps the eigenvectors, so the fast solvers are unchanged; quantitative resolution rules for sharp interfaces. \\
-Phase field & SAV time stepping~\cite{shen2018scalar}. & First HWCM with exact mass conservation and an unconditional energy law, including a stabilization term; the failure of plain SAV for thin interfaces and its remedy. \\
+Phase field & SAV time stepping~\cite{shen2018scalar}. & To our knowledge, the first HWCM with exact mass conservation and an unconditional energy law, including a stabilization term; the failure of plain SAV for thin interfaces and its remedy. \\
 Elasticity & Collocation of the Navier equations; enhanced Neumann collocation for IGA~\cite{delorenzis2015isogeometric}. & Traction conditions at edge midpoints that stay second-order accurate without enhancement, also on graded grids; mesh-independent preconditioned GMRES. \\
 Adaptivity & D\"orfler marking~\cite{dorfler1996convergent}; 1D adaptive QSC~\cite{christara2006adaptive}. & Two-dimensional anisotropic refinement driven by Haar detail coefficients, recovering the optimal rate at corner singularities without a grading parameter. \\
 Evidence & -- & Comparisons with $Q_2$ finite elements (same grids, same solver class) and with finite-difference, compact and pseudo-spectral operators; open, fully scripted reproduction. \\
@@ -191,25 +228,50 @@ Input: knots $t_0<\dots<t_N$ and the type of each end (value prescribed, or zero
 \smallskip\hrule
 \end{algorithm}
 
-\subsection{The spectrum on every grid}
+\subsection{Main result: a real, simple and nonpositive spectrum on every grid}
 The fast solvers of Section~\ref{sec:tensor} require $D_2$ to be diagonalizable with real eigenvalues.
-On uniform grids this follows from symmetry, but on graded grids $D_2$ is not symmetric. The next
-theorem shows that the property nevertheless holds on every grid. It rests on the theory of oscillation
-matrices~\cite{gantmacher2002oscillation,fallat2011totally}.
+On uniform grids this follows from symmetry (Proposition~\ref{prop:uniform}), but on graded grids $D_2$
+is not symmetric. The following theorem is the central result of the paper.
 
-\begin{theorem}[Real, simple, nonpositive spectrum]\label{thm:spectrum}
-For every knot vector, $D_2=A^{-1}L$ has $N$ real and simple eigenvalues and is therefore
-diagonalizable with real eigenvectors. If a value is prescribed at one or both ends, all eigenvalues are
-negative. If the slope vanishes at both ends, one eigenvalue is zero (constant vector), and the others
-are negative.
+\begin{theorem}[Spectrum on every grid]\label{thm:spectrum}
+Let $a=t_0<t_1<\dots<t_N=b$, with $N\ge2$, be any strictly increasing knot vector. At each end, let
+either the value or the slope (zero slope) be prescribed. Then $D_2=A^{-1}L$ has $N$ real and simple
+eigenvalues, and it is diagonalizable with a real eigenvector matrix $V$. If a value is prescribed at
+one or both ends, all eigenvalues are negative. If the slope vanishes at both ends, exactly one
+eigenvalue is zero, with the constant vector as eigenvector, and all others are negative.
 \proofin{app:spectrum}
 \end{theorem}
 
-The practical consequence is that fast diagonalization never breaks down: no complex arithmetic,
-defective matrices or Schur-based fallback are needed, on any grid the refinement algorithm may
-produce. The theorem does not bound the conditioning $\kappa(V)$ of the eigenvector matrix. We study
-it numerically in Section~\ref{sec:spectrumstudy}, where it stays moderate (at most 100 over 8760 random
-graded grids with $N\le256$).
+The proof uses only three properties of the identity of Theorem~\ref{thm:identity}. First, $A$ is a
+tridiagonal matrix with positive entries that is strictly diagonally dominant by columns. Second,
+$-L$ is a tridiagonal M-matrix. Third, the column sums of $A$ equal the cell widths. These properties
+make $A$ and $(-L)^{-1}$ totally nonnegative, and their product oscillatory in the sense of Gantmacher
+and Krein, whose eigenvalues are real, positive and simple. No assumption on the grading, such as a
+bounded ratio between neighbouring cells, is needed. In several dimensions, the theorem extends
+immediately to tensor-product operators.
+
+\begin{corollary}[Tensor-product operators]\label{cor:tensor}
+On a tensor grid in $d$ dimensions, with end conditions of the type of Theorem~\ref{thm:spectrum} in
+each direction, every operator of the form $\sum_m\alpha_mD_2^{(m)}+\gamma I$, with $\alpha_m>0$ and
+$D_2^{(m)}$ acting along direction $m$, is diagonalized by $V_1\otimes\dots\otimes V_d$, with the real
+eigenvalues $\sum_m\alpha_m\lambda^{(m)}_{i_m}+\gamma$. In particular, it is nonsingular whenever
+$\gamma<0$, or $\gamma=0$ and a value is prescribed at some end in at least one direction.
+\end{corollary}
+
+Theorem~\ref{thm:spectrum} is an algebraic statement: fast diagonalization~\eqref{eq:fdm} is well
+defined on any grid the refinement may produce, without complex arithmetic or defective matrices. It is
+not a statement about floating-point reliability, and two limits should be kept in mind. The theorem guarantees real eigenvalues, but it does not bound the
+conditioning $\kappa(V)$ of the eigenvector matrix, which controls how round-off errors are amplified by
+the transforms. It also says nothing about the conditioning of the discrete problem itself, which
+depends on the operator, the boundary conditions and the parameters. Both are studied numerically in
+Section~\ref{sec:spectrumstudy}. There, $\kappa(V)$ stays moderate, and the backward error of fast
+diagonalization equals that of the backward-stable Bartels--Stewart algorithm, even on grids with
+cell-size ratios up to $10^6$. Numerical reliability is therefore guarded explicitly. The implementation computes $\kappa(V)$ once per
+direction and grid, and after every solve it evaluates the normwise backward error
+$\eta=\|R\|/\big((|\alpha|\|D_2^x\|+|\beta|\|D_2^y\|+|\gamma|)\|U\|+\|\tilde F\|\big)$ of the residual $R$,
+which costs two extra matrix products. If $\kappa(V)>10^6$ or $\eta>10^{-12}$, the solve is repeated with the
+Bartels--Stewart algorithm. In all computations of this paper the safeguard never triggered
+(Section~\ref{sec:spectrumstudy}).
 
 \subsection{Uniform grids: symmetry, cosine transforms and a fourth-order correction}
 \begin{proposition}\label{prop:uniform}
@@ -338,14 +400,22 @@ never increases: $\tilde E^{n+1}\le\tilde E^n$. This holds for both $D_2$ and $D
 \proofin{app:energy}
 \end{theorem}
 
-Theorem~\ref{thm:energy} guarantees that the computation cannot blow up in the modified energy, for any
-time step. For thin interfaces, however, this guarantee alone is weak. It bounds $\|\nabla u\|^2$ only by
+Three different properties must be kept apart here. Theorem~\ref{thm:energy} proves that the
+\emph{modified} energy $\tilde E$ never increases, for any time step. That the original energy $E_h$ also
+decreases, that the concentration stays bounded, and that interfaces move correctly are separate
+properties, which we only observe in the tested cases. For thin interfaces, the proved property alone is
+weak. It bounds $\|\nabla u\|^2$ only by
 roughly $\tilde E/\varepsilon^2$, which still allows large values of $u$ when $\varepsilon$ is small.
 Table~\ref{tab:savstab} shows exactly this for $\varepsilon=0.0015$: plain SAV ($S=0$) produces
 $|u|\approx30$ to $70$ within 150 steps, even though $\tilde E$ decreases at every step as proved. With
 $S=4$, the same time steps keep $|u|\le1.04$, the energy decreases, and the ratio
-$\xi=r/\sqrt{E_{1,h}+C}$ equals one to five digits. We therefore recommend $S\approx4$ and monitoring
-$\xi$, since a deviation from one is an inexpensive warning sign~\cite{shen2018scalar}.
+$\xi=r/\sqrt{E_{1,h}+C}$ equals one to five digits. Section~\ref{sec:Sstudy} studies the choice of $S$ systematically. The equations are nondimensional
+($u\in[-1,1]$, unit domain), and $S$ has the units of $f'(u)$, whose maximum on $[-1,1]$ is 2; the
+classical stabilization bound $S\ge\max f'/2=1$~\cite{shen2010numerical} is therefore the natural scale,
+and $S$ does not need to be rescaled with $\varepsilon$ or $h$. In our tests the smallest $S$ that keeps
+$\xi\approx1$ was the most accurate: $S\approx1$ to 2 for $\Delta t\lesssim\varepsilon^2$, and $S\approx2$ to
+4 for larger steps. These are empirical recommendations, not proved thresholds, and $\xi\approx1$ is a
+diagnostic that does not replace error or time-step verification.
 
 \begin{algorithm}[t]\small\hrule\smallskip
 \noindent\textbf{Algorithm 2: one SAV-BDF2 time step} (\texttt{ihaar/phasefield.py}).
@@ -394,9 +464,9 @@ accuracy, particularly on non-uniform meshes. An enhanced boundary equation, whi
 the residual of the differential equation, is therefore recommended there~\cite{delorenzis2015isogeometric}.
 For midpoint collocation we observe no loss of order. In one dimension every $\alpha$ gives second order.
 The common choices $\alpha=1/4$ and $1/2$ increase the error, while $\alpha=-1/12$ reduces it by a factor
-of three (Table~\ref{tab:enh1d}). In two dimensions, plain collocation ($\alpha=0$) is second order for all
-tested configurations, on uniform and on graded grids (Tables~\ref{tab:tracsmooth}
-and~\ref{tab:tracgraded}).
+of three (Table~S3). In two dimensions, plain collocation ($\alpha=0$) is second order for all
+tested configurations, on uniform and on graded grids (Tables~S10
+and~S11).
 \end{remark}
 
 \subsection{Automatic refinement from Haar detail coefficients}\label{sec:adapt}
@@ -436,16 +506,18 @@ Property & Status & Conditions or evidence\\
 \midrule
 Three-term identity, unique solvability & proved (Thm.~\ref{thm:identity}, Cor.~\ref{cor:ops}) & any grid \\
 Real, simple, nonpositive spectrum of $D_2$ & proved (Thm.~\ref{thm:spectrum}) & any grid; any combination of end conditions \\
-Conditioning $\kappa(V)$ of the eigenvectors & observed & at most 100 over 8760 random graded grids (Table~\ref{tab:spectrum}); below 25 on all adaptive grids \\
+Conditioning $\kappa(V)$ of the eigenvectors & observed & at most 100 over 8760 random graded grids (Table~S4); below 25 on all adaptive grids \\
+Backward stability of fast diagonalization & observed; guarded & round-off-level backward error on random and adversarial grids (Tables~S16 and~\ref{tab:adversarial}); safeguard with fallback \\
 Symmetry, DCT/DST eigenvectors & proved (Prop.~\ref{prop:uniform}) & uniform grids \\
 Fourth-order correction & proved (Thm.~\ref{thm:fourth}) & uniform grids; zero-flux, periodic, or reflection-compatible data \\
 Exact mass conservation & proved (Prop.~\ref{prop:mass}, Thm.~\ref{thm:energy}) & any grid for the operator; uniform grids for the scheme \\
-Unconditional energy law (SAV) & proved (Thm.~\ref{thm:energy}) & uniform grids \\
-Accuracy of SAV for thin interfaces & observed & requires stabilization $S\approx4$ (Table~\ref{tab:savstab}) \\
+Unconditional decay of the modified energy (SAV) & proved (Thm.~\ref{thm:energy}) & uniform grids; the modified energy only \\
+Decay of the original energy; boundedness of $u$ & observed & all tested cases; boundedness for thin interfaces needs $S>0$ \\
+Choice of $S$ & empirical & $S\approx1$ to 4 depending on $\Delta t$ (Table~\ref{tab:Ssens}) \\
 Second-order accuracy for elasticity, including traction & observed & smooth solutions, uniform and graded grids \\
-Mesh-independent GMRES iterations & observed & moderate grading; iterations grow on strongly graded grids with traction edges and as $\nu\to\tfrac12$ \\
+Mesh-independent GMRES iterations & observed & compressible materials and moderate grading; iterations grow on strongly graded grids with traction edges, and strongly as $\nu\to\tfrac12$ \\
 Reliability of the refinement indicator & observed & close agreement with the true error in all tests; no bound proved \\
-Optimal adaptive rate at corner singularities & observed & Mode-I singularities, Dirichlet and traction-free cases \\
+Optimal adaptive rate & observed & six configurations, rates $-0.95$ to $-1.05$, comparable to a true-error oracle (Table~\ref{tab:adapt}); anisotropic tensor refinement, about 4 times more cells than an ideal local refinement \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -453,12 +525,16 @@ Optimal adaptive rate at corner singularities & observed & Mode-I singularities,
 %==========================================================================
 \section{Numerical results}\label{sec:results}
 %==========================================================================
-All computations were run on one core of a virtual x86 CPU with NumPy~2.4 and SciPy~1.17 in double
-precision. Every table and figure is produced by the script \url{experiments/run_all.py} of the
+All computations were run in double precision on the system described in Table~\ref{tab:env}. Every table and figure is produced by the script \url{experiments/run_all.py} of the
 repository, and all tables are typeset automatically from the stored results by
 \url{experiments/make_tables.py}.
 
-\subsection{Verification, spectrum and cost of a linear solve}\label{sec:spectrumstudy}
+\begin{table}[t]\centering\small
+\caption{Computing environment and timing protocol.}\label{tab:env}
+\input{tables/t_env.tex}
+\end{table}
+
+\subsection{Verification, numerical reliability and cost of a linear solve}\label{sec:spectrumstudy}
 Table~\ref{tab:poisson} reports the maximum nodal errors for $-\Delta u=f$ with prescribed values and
 exact solution $u=e^x\sin\pi y+x^2y$, on uniform and on Chebyshev-graded grids, and for $(I-\Delta)u=f$
 with zero-slope conditions and $u=\cos\pi x\cos2\pi y+0.3\cos3\pi x$. The plain operator is second order
@@ -470,18 +546,50 @@ $3\times10^{-10}$ at $N=512$.
 \input{tables/t_poisson.tex}
 \end{table}
 
-To complement Theorem~\ref{thm:spectrum}, which guarantees real eigenvalues but says nothing about the
-conditioning of the eigenvectors, we generated 8760 random graded grids. Their cell sizes follow a random
-walk in which neighbouring cells differ by at most a factor of 1.5, 2 or 4, and the global size ratio
-reaches up to $10^6$. Table~\ref{tab:spectrum} confirms that the eigenvalues are real to machine precision
-in every case. It also shows that $\kappa(V)$ grows moderately with $N$ and with the neighbour ratio, up
-to about 100 for $N=256$ and a ratio of 4. The refinement algorithm limits the neighbour ratio to 2, and on
-all adaptive grids of this paper $\kappa(V)$ stayed below 25.
+Theorem~\ref{thm:spectrum} guarantees real eigenvalues but does not bound the conditioning of the
+eigenvectors, so we checked the numerical behaviour of fast diagonalization directly. We generated 8760
+random graded grids, whose cell sizes follow a random walk in which neighbouring cells differ by at most
+a factor of 1.5, 2 or 4, with global size ratios up to $10^6$. The eigenvalues were real to machine
+precision in every case, and $\kappa(V)$ grew moderately with $N$ and with the neighbour ratio, up to
+about 100 for $N=256$ and a ratio of 4 (Table~S4 of the Supplementary Material). The refinement algorithm
+limits the neighbour ratio to 2, and on all adaptive grids of this paper $\kappa(V)$ stayed below 25. For
+the worst-conditioned grid of each family, Table~S16 compares the solution of the
+two-dimensional Sylvester equation $D_2U+UD_2^{\mathsf T}=F$ by fast diagonalization with the
+Bartels--Stewart algorithm. The normwise backward errors of the two methods are the same, between
+$10^{-18}$ and $10^{-16}$. The difference between their solutions grows to $10^{-7}$ on the most extreme
+grids, which reflects the conditioning of the Sylvester problem itself rather than an instability of fast diagonalization.
+
+Random walks may miss unfavourable patterns, so we also constructed adversarial grid families:
+alternating cell sizes with ratios up to 1000, isolated end cells $10^{-6}$ times smaller than the rest,
+geometric grading with global ratios up to $10^{12}$, unbounded random cell sizes, and a cluster of cells
+$10^{-4}$ times smaller than their neighbours (Table~\ref{tab:adversarial}). The eigenvalues were real in
+every case, and $\kappa(V)$ stayed below 85. The backward error of fast diagonalization stayed below
+$6\times10^{-15}$. It is sometimes larger than that of Bartels--Stewart, but it remains at round-off level,
+far below the safeguard threshold. On the most extreme grids, the two solutions differ substantially even
+though both are backward stable; these problems are simply ill conditioned. The fallback, when needed,
+costs 13 to 18 times more than fast diagonalization (Table~\ref{tab:fallback}).
 
 \begin{table}[t]\centering\small
-\caption{Spectrum of $D_2$ on random graded grids.}\label{tab:spectrum}
-\input{tables/t_spectrum.tex}
+\caption{Adversarial grid families ($N=256$): eigenvector conditioning, normwise backward errors of fast
+diagonalization (FDM) and Bartels--Stewart (B--S), and relative difference of the two solutions.}\label{tab:adversarial}
+\input{tables/t_adversarial.tex}
 \end{table}
+\begin{table}[t]\centering\small
+\caption{Cost of the safeguard: FDM including the backward-error check versus the Bartels--Stewart fallback,
+on Chebyshev-graded grids (medians of repeated runs).}\label{tab:fallback}
+\input{tables/t_fallback.tex}
+\end{table}
+
+In three dimensions, the same operators give a tensor solve with three mode products per transform.
+Table~\ref{tab:3d} reports the manufactured problem $(I-\Delta)u=f$ on $(0,1)^3$ with prescribed values and
+$u=e^{x+y/2-z/3}+\sin\pi x\,\sin2\pi y\,\cos\pi z$. The error converges at second order on uniform and on
+Chebyshev-graded grids, and a solve with 885\,000 unknowns takes 0.05 to 0.06~s.
+
+\begin{table}[t]\centering\small
+\caption{Three-dimensional manufactured problem: maximum nodal error, observed rate and solve time.}\label{tab:3d}
+\input{tables/t_3d.tex}
+\end{table}
+
 
 Table~\ref{tab:cost} compares the wall time of one solve with $N^2$ unknowns. Classical dense HWCM
 needs 1.2~s at $N=64$ and is infeasible beyond that. The fast-diagonalization solve costs milliseconds
@@ -498,16 +606,12 @@ Errors are measured in the relative $H^1$ seminorm of the reconstructed spline, 
 $4\times4$ Gauss points per cell. We use $E=1$ and $\nu=0.3$ unless stated otherwise. For the
 manufactured solution $u=\sin(\pi x)\cos(2y)+xy$ and $v=e^x\sin(\pi y)+y$, the error converges at
 second order, and GMRES needs 15 to 17 iterations for all grid sizes (Table~\ref{tab:elsmooth}). As
-$\nu\to\frac12$, both the iteration counts and the error constants grow (Table~\ref{tab:nu}). The method
+$\nu\to\frac12$, both the iteration counts and the error constants grow (Table~S1). The method
 is therefore not robust in the incompressible limit.
 
 \begin{table}[t]\centering\small
 \caption{Smooth solution with prescribed displacements on all edges.}\label{tab:elsmooth}
 \input{tables/t_el_smooth.tex}
-\end{table}
-\begin{table}[t]\centering\small
-\caption{Dependence on Poisson's ratio, prescribed displacements on all edges.}\label{tab:nu}
-\input{tables/t_el_nu.tex}
 \end{table}
 
 For the singular tests we use the exact Mode-I Williams field of a re-entrant corner of opening
@@ -519,19 +623,22 @@ that the field satisfies the Navier equations to $10^{-10}$ and has traction-fre
 Since $u\sim r^\lambda$ near the corner, uniform grids converge like $\mathrm{DOF}^{-\lambda/2}$.
 
 In the first singular test, the singular point is a corner of the unit square, and all edges carry
-the exact displacements (Table~\ref{tab:sing} and Fig.~\ref{fig:elast}). Uniform grids give a relative
+the exact displacements (Fig.~\ref{fig:elast} and Table~S12). Uniform grids give a relative
 error of $1.45\times10^{-2}$ with 131\,072 unknowns. Automatic refinement reaches $1.2\times10^{-4}$ with
 130\,048 unknowns, and the fitted rate $\mathrm{DOF}^{-0.95}$ is close to the optimal
 $\mathrm{DOF}^{-1}$ for $C^1$ quadratics. The cell size of the generated grids follows
 $h\propto d^{0.78}$, where $d$ is the distance to the singular lines. This is close to the exponent
 $1-\lambda/2\approx0.73$ predicted for optimally graded meshes~\cite{babuska1979direct,apel1999anisotropic},
 although the algorithm is never told $\lambda$. GMRES needs 9 to 15 iterations throughout, even for cells
-with aspect ratios around $10^6$.
+with aspect ratios around $10^6$. These rates are observations for the two Mode-I configurations studied
+here; since the indicator has no proved reliability bound, they do not constitute an adaptive
+convergence theorem. Tensor refinement also has a cost, because refinement lines extend across the
+domain. To quantify it, we compare the number of cells of the final tensor grid with the number of square
+cells of size $\max(h_x,h_y)$ needed to cover each tensor cell, a proxy for an ideal local refinement with
+the same local resolution. The tensor grids have 4.2 times (prescribed displacements) and 3.6 times
+(traction-free face) as many cells as this local estimate. This constant factor does not affect the
+convergence rate, and it is the price paid for the fast tensor solvers.
 
-\begin{table}[t]\centering\small
-\caption{Corner singularity with prescribed displacements: uniform versus automatic refinement.}\label{tab:sing}
-\input{tables/t_el_sing.tex}
-\end{table}
 \begin{figure}[t]\centering
 \includegraphics[width=\textwidth]{../figures/elasticity_corner.pdf}
 \caption{Corner singularity with prescribed displacements. Left: error versus unknowns. Middle: grid
@@ -543,36 +650,18 @@ singular lines on the final grid.}\label{fig:elast}
 For the smooth solution, we impose tractions on one edge, on two adjacent edges (which creates a
 traction--traction corner), or on two opposite edges. In every configuration, both the $H^1$ error and
 the displacement on the traction edges converge at second order, and GMRES needs 18 to 27 iterations
-independently of the grid size (Table~\ref{tab:tracsmooth}). With traction edges, the iteration counts
-grow faster as $\nu\to\frac12$ (Table~\ref{tab:tracnu}).
+independently of the grid size (Table~S10). With traction edges, the iteration counts
+grow faster as $\nu\to\frac12$ (Table~S2).
 
-\begin{table}[t]\centering\small
-\caption{Traction boundaries, smooth solution: relative $H^1$ error for four configurations, GMRES
-iterations, and maximum displacement error on the traction edges.}\label{tab:tracsmooth}
-\input{tables/t_trac_smooth.tex}
-\end{table}
-\begin{table}[t]\centering\small
-\caption{Traction on two adjacent edges: dependence on Poisson's ratio.}\label{tab:tracnu}
-\input{tables/t_trac_nu.tex}
-\end{table}
-\begin{table}[t]\centering\small
-\caption{One-dimensional model $u''=f$ with $u(0)$ and $u'(1)$ given: maximum error with an enhanced end
-row of weight $\alpha$.}\label{tab:enh1d}
-\input{tables/t_enh1d.tex}
-\end{table}
 
 Since pointwise traction conditions lose accuracy for isogeometric collocation on non-uniform
 meshes~\cite{delorenzis2015isogeometric}, we repeated the smooth test on graded grids
-(Table~\ref{tab:tracgraded}). The first family is the Chebyshev grid. The second is a geometric grid
+(Table~S11). The first family is the Chebyshev grid. The second is a geometric grid
 graded toward the traction edge, with cell-size ratios up to 85. On both, the error remains second
 order, and so does the displacement on the traction edges. On the strongly graded geometric grids,
 however, the number of GMRES iterations grows with $N$, from 39 to 139, because the decoupled
 preconditioner treats the traction rows only approximately.
 
-\begin{table}[t]\centering\small
-\caption{Traction on two adjacent edges, smooth solution, on graded grids.}\label{tab:tracgraded}
-\input{tables/t_trac_graded.tex}
-\end{table}
 
 In the last elasticity test we place the square so that its top edge lies on a traction-free face of
 the wedge, with the singular point at the end of that face. The exact traction on the top edge vanishes
@@ -591,6 +680,31 @@ GMRES iterations (Table~\ref{tab:tracsing} and Fig.~\ref{fig:trac}).
 Left: error versus unknowns. Right: adaptive grid after 12 cycles.}\label{fig:trac}
 \end{figure}
 
+\subsection{Broader tests of the refinement indicator}\label{sec:adaptmore}
+To test the indicator beyond the two configurations above, we repeated the traction-free-face problem for
+four corner openings, $\omega=1.25\pi$, $1.5\pi$, $1.75\pi$ and $1.95\pi$ (a near-crack), with exponents
+$\lambda$ from 0.674 to 0.500. We also solved a problem with two singular corners at both ends of the
+traction-free edge, and a smooth solution with boundary layers of width $0.01$ at two edges. For each case we
+compare the indicator with an oracle that marks cells by their true error, using the same D\"orfler marking
+(Table~\ref{tab:adapt} and Fig.~\ref{fig:adapt}). The indicator recovers rates between $-0.95$ and $-1.05$ in
+every case, equal to those of the oracle within a few hundredths. At equal numbers of unknowns, the oracle
+reaches errors 1.4 to 2.4 times smaller for the singular cases, whereas for the boundary layer the indicator
+is the better of the two. The effectivity $\eta/e$ varies within a factor of about four for the singular
+cases, but much more for the boundary layer in the pre-asymptotic phase. Each adaptive sequence requires
+18 to 23 cycles and about one second in total. The indicator therefore behaves well in all tested cases, but
+these are observations; it has no proved reliability or efficiency bound. We also stress that the
+refinement is anisotropic tensor-product refinement, not local refinement.
+
+\begin{table}[t]\centering\small
+\caption{Refinement indicator versus a true-error oracle for six configurations.}\label{tab:adapt}
+\input{tables/t_adapt.tex}
+\end{table}
+\begin{figure}[t]\centering
+\includegraphics[width=\textwidth]{../figures/adaptivity_cases.pdf}
+\caption{Error versus unknowns for the refinement indicator and the true-error oracle, with the uniform
+$128^2$ result for reference.}\label{fig:adapt}
+\end{figure}
+
 \subsection{Comparison with biquadratic finite elements}\label{sec:q2}
 To place the elasticity results in context, we solve the traction-free-face problem with standard $Q_2$
 (biquadratic Lagrange) Galerkin finite elements on exactly the same grids, both uniform and those
@@ -602,23 +716,35 @@ conjugate gradients preconditioned by fast diagonalization of
 $(\lambda_L+2\mu)S_x\otimes M_y+\mu M_x\otimes S_y$ and of the corresponding $v$-operator, which
 uses the generalized eigendecomposition of the one-dimensional stiffness and mass matrices.
 
-Table~\ref{tab:q2} and Fig.~\ref{fig:q2} lead to three observations. On the same grid, $Q_2$ is about 1.3
-times more accurate than IHWC, but it has about four times as many unknowns, because it places nodes at
-cell corners, edge midpoints and cell centres. At equal numbers of unknowns, IHWC is therefore the more
-accurate method; for example, it reaches $1.1\times10^{-3}$ with 16\,000 unknowns, where $Q_2$ reaches
-$2.7\times10^{-3}$ with 19\,000. With equally efficient solvers, IHWC reaches a given accuracy roughly
-twice as fast: $3.6\times10^{-4}$ in 0.13~s against $2.8\times10^{-4}$ in 0.24~s for $Q_2$, and
-$1.2\times10^{-4}$ in 0.48~s against $9.2\times10^{-5}$ in 0.95~s. The sparse direct solver is one to two
-orders of magnitude slower again (18.5~s at 194\,000 unknowns). Most of the speed advantage reported in
-earlier comparisons of structured and unstructured methods is therefore a solver effect. The genuine
-advantage of the discretization is the factor of about four in unknowns, and the resulting factor of
-about two in time. Both methods recover the optimal adaptive rate on the IHWC-generated grids, and both
-fast-diagonalization solvers need a mesh-independent number of iterations (11 to 20 for $Q_2$ with CG).
+Table~\ref{tab:q2} and Fig.~\ref{fig:q2} report errors, unknowns, setup and solve times, and memory.
+On the same grid, $Q_2$ is about 1.3 times more accurate than IHWC, but it has about four times as many
+unknowns, because it places nodes at cell corners, edge midpoints and cell centres. At equal numbers of
+unknowns, IHWC is therefore the more accurate method. For example, it reaches $1.1\times10^{-3}$ with
+16\,000 unknowns, where $Q_2$ reaches $2.7\times10^{-3}$ with 19\,000.
+
+Three different claims must be kept apart. The first is about unknowns: at equal accuracy, IHWC needs
+about a quarter of the unknowns of $Q_2$, which is a property of the discretizations. The second is about
+time. End to end, including setup (operator construction and eigendecompositions for IHWC, assembly and
+eigendecompositions for $Q_2$), IHWC reaches $8.0\times10^{-5}$ in 1.2~s with 163~MB, while $Q_2$ with
+conjugate gradients reaches $6.3\times10^{-5}$ in 4.3~s with 308~MB. Interpolated to equal accuracy, IHWC is
+about 2.5 to 3 times faster and uses about 40\% less memory. Excluding assembly, which depends on the
+implementation, the time advantage is about 1.4. The third claim is that these numbers hold for this
+problem class, this implementation and this hardware (Table~\ref{tab:env}), and should not be read as a
+universal method-level speed-up. Three caveats apply. The IHWC
+memory is dominated by the GMRES Krylov basis (restart length 80), and it can be reduced with a shorter
+restart. The $Q_2$ assembly time depends on the implementation; ours builds sparse Kronecker products in
+Python. Finally, the comparison uses a structured preconditioner for both methods. \input{tables/amg_note.tex} The sparse direct solver is one to
+two orders of magnitude slower than either iterative solver (18.5~s at 194\,000 unknowns), so most of the
+large speed-ups often reported between structured and unstructured methods are solver effects. The
+advantage attributable to the discretization itself is the factor of about four in unknowns, and the
+resulting factors of two to three in time and about two in memory. Both methods recover the optimal
+adaptive rate on the IHWC-generated grids, and both fast-diagonalization solvers need a mesh-independent
+number of iterations.
 
 \begin{table}[t]\centering\small
 \caption{IHWC collocation versus $Q_2$ finite elements on identical grids (traction-free-face
-singularity; every third refinement cycle is shown). Times are solve times, excluding assembly and
-setup.}\label{tab:q2}
+singularity; every third refinement cycle is shown). Setup and solve times are reported separately; memory counts the operators, factorizations and Krylov
+vectors.}\label{tab:q2}
 \input{tables/t_q2.tex}
 \end{table}
 \begin{figure}[t]\centering
@@ -632,14 +758,9 @@ For the Allen--Cahn shrinking circle with $\varepsilon=0.02$ and $R_0=0.3$, the 
 gives $R^2(t)=R_0^2-2\varepsilon^2t$. The grid-converged slope ($128^2$ and $256^2$ agree to four digits)
 deviates from this law by 0.37\%, which is consistent with the $O(\varepsilon)$ corrections to that
 limit. On the $64^2$ grid, the slope differs from the converged value by 1.35\% with $D_2$ and by 0.26\%
-with $D_2^{(4)}$ (Table~\ref{tab:ac} and Fig.~\ref{fig:ac}). Both the modified and the original energy
+with $D_2^{(4)}$ (Fig.~\ref{fig:ac} and Table~S13). Both the modified and the original energy
 decrease at every step.
 
-\begin{table}[t]\centering\small
-\caption{Allen--Cahn shrinking circle ($\varepsilon=0.02$, $\Delta t=0.05$): fitted slope, its deviation
-from $-2\varepsilon^2$, and the largest step changes of the modified and the original energy.}\label{tab:ac}
-\input{tables/t_ac.tex}
-\end{table}
 \begin{figure}[t]\centering
 \includegraphics[width=0.72\textwidth]{../figures/allen_cahn_circle.pdf}
 \caption{Allen--Cahn shrinking circle: $R^2(t)$ (left) and discrete energy (right).}\label{fig:ac}
@@ -648,30 +769,14 @@ from $-2\varepsilon^2$, and the largest step changes of the modified and the ori
 For a smooth Cahn--Hilliard solution ($\varepsilon=0.05$), grids with $N=18$, 54 and 162 are compared
 with a grid with $N=486$. The factor of three between grids makes the coarse midpoints a subset of the
 fine ones, so no interpolation is needed. The observed spatial orders are two for $D_2$ and four for
-$D_2^{(4)}$ (Table~\ref{tab:chspace}), and the time order of SAV-BDF2 is two (Table~\ref{tab:chtime}).
+$D_2^{(4)}$ (Table~S14), and the time order of SAV-BDF2 is two (Table~S6).
 For spinodal decomposition with $\varepsilon=0.01$ on $256^2$ and $\varepsilon=0.02$ on $96^3$, mass is
-conserved to round-off and the energy decreases monotonically (Table~\ref{tab:spinodal},
-Figs.~\ref{fig:spinodal} and~\ref{fig:ch3d}).
+conserved to round-off and the energy decreases monotonically (Table~S7,
+Fig.~\ref{fig:spinodal} and Fig.~S1).
 
-\begin{table}[t]\centering\small
-\caption{Cahn--Hilliard: spatial self-convergence in the maximum norm.}\label{tab:chspace}
-\input{tables/t_ch_space.tex}
-\end{table}
-\begin{table}[t]\centering\small
-\caption{Cahn--Hilliard: temporal convergence of SAV-BDF2 ($N=128$, $D_2^{(4)}$).}\label{tab:chtime}
-\input{tables/t_ch_time.tex}
-\end{table}
-\begin{table}[t]\centering\small
-\caption{Spinodal decomposition: conservation, energy and cost.}\label{tab:spinodal}
-\input{tables/t_spinodal.tex}
-\end{table}
 \begin{figure}[t]\centering
 \includegraphics[width=\textwidth]{../figures/cahn_hilliard_spinodal.pdf}
 \caption{Cahn--Hilliard spinodal decomposition on $256^2$: concentration at three times, and discrete energy.}\label{fig:spinodal}
-\end{figure}
-\begin{figure}[t]\centering
-\includegraphics[width=0.62\textwidth]{../figures/cahn_hilliard_3d.pdf}
-\caption{Three-dimensional Cahn--Hilliard on $96^3$: slices of the concentration at the final time.}\label{fig:ch3d}
 \end{figure}
 
 \subsection{Very sharp interfaces}\label{sec:sharp}
@@ -683,7 +788,7 @@ nodes per $\sqrt2\varepsilon$.
 
 To answer the question directly, we solve the steady planar interface
 $u=\tanh((x-\frac12)/\sqrt2\varepsilon)$ on discrete grids. The interface is pinned at $x=\frac12$ by
-symmetry, which removes its translation mode. Fig.~\ref{fig:res} and Table~\ref{tab:resolution} compare
+symmetry, which removes its translation mode. Fig.~\ref{fig:res} and Table~S5 compare
 the three-point finite-difference Laplacian with $D_2$ and $D_2^{(4)}$. The operator $D_2$ is about twice
 as accurate as finite differences at every resolution, as Theorem~\ref{thm:fourth} predicts. The
 corrected operator $D_2^{(4)}$ pays off from about 1.5 nodes per $\sqrt2\varepsilon$. At 3.6 nodes its
@@ -695,10 +800,6 @@ nodes per $\sqrt2\varepsilon$ the interface is under-resolved, and $D_2^{(4)}$ i
 \includegraphics[width=0.5\textwidth]{../figures/interface_resolution.pdf}
 \caption{Planar interface ($\varepsilon=0.01$): maximum nodal error versus nodes per $\sqrt2\varepsilon$.}\label{fig:res}
 \end{figure}
-\begin{table}[t]\centering\small
-\caption{Planar interface ($\varepsilon=0.01$): maximum nodal error for three operators.}\label{tab:resolution}
-\input{tables/t_resolution.tex}
-\end{table}
 
 For the Allen--Cahn six-fold star with $\varepsilon=0.004$, the initial interface
 $r=0.25+0.08\cos6\theta$ evolves under curvature flow up to $t=120$, with $\Delta t=0.1$. A $1024^2$ run
@@ -746,12 +847,31 @@ marks the zoomed region) and discrete energy. Bottom: zoom in which each square 
 magnitude; nodal values along a grid line crossing an interface, compared with the $\tanh$ profile.}\label{fig:chsharp}
 \end{figure}
 
+\subsection{Choice of the stabilization parameter}\label{sec:Sstudy}
+To support the recommendation of Section~\ref{sec:pf}, we ran Cahn--Hilliard with $\varepsilon=0.004$ on
+$384^2$, which gives the same 2.2 nodes per $\sqrt2\varepsilon$ as the $1024^2$ example. Starting from a
+coarsened state, we advanced to $T=2000\,\varepsilon^2$ with $\Delta t=\varepsilon^2$, $8\varepsilon^2$ and
+$32\varepsilon^2$, and $S=0$, 1, 2, 4 and 8, and compared with a reference computed with $S=4$ and
+$\Delta t=\varepsilon^2/4$ (Table~\ref{tab:Ssens}). Without stabilization the computation fails at every step
+size. With $\Delta t=\varepsilon^2$, every $S\ge1$ is stable, and the error grows linearly with $S$, from
+$2\times10^{-3}$ at $S=1$ to $1.4\times10^{-2}$ at $S=8$. At larger steps, $S=1$ lets $\xi$ drift to 0.8, and
+$S=2$ to 4 keep $|u|\le1.07$. At $\Delta t=32\varepsilon^2$, however, every bounded run is still wrong by an
+amount of order one, because the interfaces have moved incorrectly. Boundedness and $\xi\approx1$ are
+therefore necessary but not sufficient for accuracy, and time steps of order $\varepsilon^2$ are needed for
+accurate coarsening dynamics.
+
+\begin{table}[t]\centering\small
+\caption{Sensitivity to the stabilization $S$ and the time step: largest $|u_h|$, error against the reference
+at $T=2000\varepsilon^2$, and $\xi$ at $T$ ($\varepsilon=0.004$, $384^2$).}\label{tab:Ssens}
+\input{tables/t_Ssens.tex}
+\end{table}
+
 \subsection{Comparison with other discretizations on uniform grids}\label{sec:compare}
 All uniform-grid operators considered here are diagonalized by the same cosine transform. The
 three-point difference, $D_2$, $D_2^{(4)}$, the compact Pad\'e operator and the cosine pseudo-spectral
 operator therefore differ only in the eigenvalues used in Algorithm~2. This makes an exactly fair
 comparison possible, with the same SAV scheme, the same time step and the same cost per step
-(Table~\ref{tab:compare} and Fig.~\ref{fig:compare}). The operator $D_2$ is consistently about twice as
+(Fig.~\ref{fig:compare} and Table~S15). The operator $D_2$ is consistently about twice as
 accurate as the three-point difference. The Pad\'e operator is about 1.4 times more accurate than
 $D_2^{(4)}$, as predicted by the error constants. For problems on uniform boxes with zero-flux or periodic
 conditions, the pseudo-spectral operator is far more accurate than all others. It reaches round-off on the
@@ -765,18 +885,17 @@ refined grids, prescribed values, traction conditions and singular solutions, wh
 not apply directly. It also offers the many existing HWCM codes a direct route to fast and provably
 stable solvers.
 
-\begin{table}[t]\centering\small
-\caption{Uniform-grid operators within the identical SAV-BDF2 solver.}\label{tab:compare}
-\input{tables/t_compare.tex}
-\end{table}
 \begin{figure}[t]\centering
 \includegraphics[width=0.5\textwidth]{../figures/scheme_comparison.pdf}
 \caption{Planar interface: maximum nodal error versus resolution for five operators.}\label{fig:compare}
 \end{figure}
 
 \subsection{Performance}
-Table~\ref{tab:perf} reports the time per Cahn--Hilliard step. On one CPU core, the cosine-transform
-variant processes between $10^7$ and $3\times10^7$ unknowns per second. \input{tables/gpu_note.tex}
+Table~\ref{tab:perf} reports the time per Cahn--Hilliard step. The relevant quantity is the algorithmic
+complexity: a step costs $O(N^d\log N)$ operations with fast cosine transforms and $O(N^{d+1})$ with dense
+matrix products, without any sparse data structure. Absolute timings depend on the hardware and should be
+read in that light. On one CPU core, the cosine-transform variant processes between $10^7$ and
+$3\times10^7$ unknowns per second. \input{tables/gpu_note.tex}
 
 \begin{table}[t]\centering\small
 \caption{Time per Cahn--Hilliard SAV-BDF2 step with $D_2^{(4)}$.}\label{tab:perf}
@@ -796,12 +915,12 @@ Decision & Recommendation\\
 \midrule
 Plain or corrected operator & Use $D_2^{(4)}$ for zero-flux or periodic problems, since it costs nothing extra. With general prescribed values, use $D_2$, because the correction does not raise the order there.\\
 When not to use IHWC & For smooth or phase-field problems on uniform boxes with zero-flux or periodic conditions, a cosine pseudo-spectral operator is far more accurate at the same cost (Section~\ref{sec:compare}).\\
-Interface resolution & Use at least 1.5 nodes per $\sqrt2\varepsilon$ with $D_2^{(4)}$. Expect a nodal error of about $10^{-3}$ at 2 to 3 nodes, and about $10^{-4}$ at 3.5 nodes (Table~\ref{tab:resolution}).\\
-Time stepping (AC, CH) & Use SAV-BDF2 with stabilization $S\approx4$ and monitor $\xi=r/\sqrt{E_{1,h}+C}$; if it leaves $[0.999,1.001]$, reduce $\Delta t$. Start with small steps from random initial data, and increase $\Delta t$ as the structure coarsens, restarting with BDF1 at each change.\\
-Solver & On uniform grids, use cosine or sine transforms. On graded grids, use fast diagonalization with dense matrix products (Theorem~\ref{thm:spectrum} guarantees that it applies). For coupled systems such as elasticity, use GMRES with the block preconditioner.\\
+Interface resolution & Use at least 1.5 nodes per $\sqrt2\varepsilon$ with $D_2^{(4)}$. Expect a nodal error of about $10^{-3}$ at 2 to 3 nodes, and about $10^{-4}$ at 3.5 nodes (Table~S5).\\
+Time stepping (AC, CH) & Use SAV-BDF2 with the smallest stabilization that keeps $\xi=r/\sqrt{E_{1,h}+C}$ near one: $S\approx1$ to 2 for $\Delta t\lesssim\varepsilon^2$, 2 to 4 for larger steps (Table~\ref{tab:Ssens}). Keep $\Delta t$ of order $\varepsilon^2$ when the coarsening dynamics matter, and verify by halving $\Delta t$; $\xi\approx1$ alone does not guarantee accuracy.\\
+Solver & On uniform grids, use cosine or sine transforms. On graded grids, use fast diagonalization (well defined by Theorem~\ref{thm:spectrum}) with the backward-error safeguard; fall back to Bartels--Stewart if $\kappa(V)>10^6$ or $\eta>10^{-12}$. For coupled systems such as elasticity, use GMRES with the block preconditioner.\\
 Adaptivity at singularities & Use the Haar-detail indicator with D\"orfler parameter $\theta\approx0.6$, a neighbour ratio of at most two, and an initial grid of $8\times8$ cells.\\
 Traction conditions & Collocate tractions plainly at edge midpoints, without enhancement, and use the two normal-stress conditions at traction--traction corners.\\
-Near incompressibility & Avoid $\nu>0.45$ with the present formulation (Tables~\ref{tab:nu} and~\ref{tab:tracnu}).\\
+Near incompressibility & Avoid $\nu>0.45$ with the present formulation (Tables~S1 and~S2).\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -812,7 +931,8 @@ Near incompressibility & Avoid $\nu>0.45$ with the present formulation (Tables~\
 The fast solvers require rectangular domains. Non-convex domains such as the full L-shaped domain, and
 curved boundaries, need multi-patch coupling or geometry maps; the local corner structure of the L-shape
 is, however, covered by the traction-free-face test. Tensor refinement extends refinement lines across the
-whole domain. For point singularities this costs only a constant factor, and the optimal rate is retained.
+whole domain. For point singularities this costs only a constant factor, about four in our tests, and the optimal
+rate is retained.
 For interfaces that move through the domain, local refinement would be preferable, but integrated Haar
 functions are not compactly supported, so local refinement would require a different basis, such as
 truncated hierarchical B-splines.
@@ -830,20 +950,23 @@ is still missing.
 \section{Conclusions}
 %==========================================================================
 Rewritten in nodal form, Haar wavelet collocation is quadratic-spline collocation, and its
-second-derivative operator is the product of two tridiagonal matrices with a real, simple and nonpositive
-spectrum on every grid. This structural fact replaces the dense matrices of classical HWCM by fast tensor
+second-derivative operator $A^{-1}L$ has a real, simple and nonpositive spectrum on every grid, which we proved using oscillation-matrix theory. Fast diagonalization is therefore well defined on any
+tensor grid, including adaptively generated ones; its numerical reliability is not part of the theorem, but
+it was backward stable on random and adversarial grids, and an inexpensive safeguard covers the remaining
+risk. This structural fact replaces the dense matrices of classical HWCM by fast tensor
 solvers, gives a fourth-order correction at no cost, and supports provably mass-conserving and
 energy-stable phase-field schemes. With stabilized SAV time stepping, Allen--Cahn and Cahn--Hilliard
 interfaces are resolved accurately down to about two nodes per $\sqrt2\varepsilon$, at a cost of two fast
 transforms per step. For elastostatics with prescribed displacements and tractions, preconditioned GMRES
 converges in a mesh-independent number of iterations, and refinement driven by Haar detail coefficients
-recovers the optimal rate at corner singularities. Against biquadratic finite elements with an equally
-efficient solver, the method reaches a given accuracy with about a quarter of the unknowns and in about
-half the time. For smooth problems on uniform boxes, pseudo-spectral methods remain the better choice.
+recovers the optimal rate at corner singularities. Against biquadratic finite elements with the same solver class, the method needs about a quarter of the
+unknowns for a given accuracy; the resulting time and memory savings (factors of about 2.5 to 3 and 1.6 in
+our implementation) depend on implementation and hardware. For smooth problems on uniform boxes, pseudo-spectral methods remain the better choice, and for
+nearly incompressible materials a mixed formulation is needed.
 
 \section*{Code and data availability}
 The implementation, the unit tests, and the scripts that produce every table and figure of this paper
-are available at \repo. Dependencies are listed in \texttt{requirements.txt} (CPU) and
+are available at \repo; the version used for this paper is the tagged release v1.0, archived at \archive. Dependencies are listed in \texttt{requirements.txt} (CPU) and
 \texttt{requirements-gpu.txt} (GPU, with CuPy).
 
 \section*{Declaration of competing interest}
@@ -959,16 +1082,22 @@ For mass conservation in CH, $\langle K\mu,1\rangle_h=\langle\mu,K1\rangle_h=0$,
 $\langle3u^{n+1}-4u^n+u^{n-1},1\rangle_h=0$. Since the BDF1 first step also conserves mass, induction gives
 conservation, and Proposition~\ref{prop:mass} identifies the discrete sum with the integral.
 
-For the energy, take the inner product of~\eqref{eq:sav1} with $2\Delta t\,\mu^{n+1}$. The left-hand side
-gives $-2\Delta t\langle G_h\mu,\mu\rangle_h\le0$. On the right-hand side, write $a=u^{n+1}$, $b=u^n$ and
+For the energy, multiply~\eqref{eq:sav1} by $2\Delta t$ and take the inner product with $\mu^{n+1}$:
+\[
+\langle3a-4b+c,\mu^{n+1}\rangle_h=-2\Delta t\langle G_h\mu^{n+1},\mu^{n+1}\rangle_h\le0 .
+\]
+On the left-hand side, insert the expression for $\mu^{n+1}$ and write $a=u^{n+1}$, $b=u^n$ and
 $c=u^{n-1}$, and use the identities
 \begin{align*}
 2\langle3a-4b+c,Ka\rangle_h&=\|a\|_K^2-\|b\|_K^2+\|2a-b\|_K^2-\|2b-c\|_K^2+\|a-2b+c\|_K^2,\\
 \langle3a-4b+c,a-2b+c\rangle_h&=\|a-b\|_h^2-\|b-c\|_h^2+2\|a-2b+c\|_h^2,
 \end{align*}
 the second of which follows from $(3x-y)(x-y)=x^2-y^2+2(x-y)^2$ with $x=a-b$ and $y=b-c$, together with
-the scalar version of the first identity applied to~\eqref{eq:sav2} multiplied by $2r^{n+1}$. Collecting
-terms gives
+the scalar version of the first identity applied to~\eqref{eq:sav2} multiplied by $2r^{n+1}$, which gives
+$r^{n+1}\langle\bar b,3a-4b+c\rangle_h=(r^{n+1})^2-(r^n)^2+(2r^{n+1}-r^n)^2-(2r^n-r^{n-1})^2+(r^{n+1}-2r^n+r^{n-1})^2$.
+Collecting terms, the left-hand side equals
+$2(\tilde E^{n+1}-\tilde E^n)+\tfrac{\varepsilon^2}{2}\|a-2b+c\|_K^2+(r^{n+1}-2r^n+r^{n-1})^2+2S\|a-2b+c\|_h^2$.
+Equating with $-2\Delta t\langle G_h\mu^{n+1},\mu^{n+1}\rangle_h$ and dividing by two gives
 \begin{multline*}
 \tilde E^{n+1}-\tilde E^n=-\Delta t\langle G_h\mu^{n+1},\mu^{n+1}\rangle_h-\tfrac{\varepsilon^2}{4}\|a-2b+c\|_K^2\\
 -\tfrac12(r^{n+1}-2r^n+r^{n-1})^2-S\|a-2b+c\|_h^2\le0.
@@ -1008,6 +1137,13 @@ Theorem~\ref{thm:fourth}).
 \bibitem{shen2018scalar} J. Shen, J. Xu, J. Yang, The scalar auxiliary variable (SAV) approach for gradient flows, J. Comput. Phys. 353 (2018) 407--416.
 \bibitem{gantmacher2002oscillation} F.R. Gantmacher, M.G. Krein, Oscillation Matrices and Kernels and Small Vibrations of Mechanical Systems, revised ed., AMS Chelsea Publishing, Providence, RI, 2002.
 \bibitem{fallat2011totally} S.M. Fallat, C.R. Johnson, Totally Nonnegative Matrices, Princeton University Press, Princeton, NJ, 2011.
+\bibitem{karlin1968total} S. Karlin, Total Positivity, Vol.~I, Stanford University Press, Stanford, CA, 1968.
+\bibitem{deboor2001practical} C. de Boor, A Practical Guide to Splines, revised ed., Springer, New York, 2001.
+\bibitem{dyksen1987tensor} W.R. Dyksen, Tensor product generalized ADI methods for separable elliptic problems, SIAM J. Numer. Anal. 24 (1987) 59--76.
+\bibitem{sun1999spectral} W. Sun, Spectral analysis of Hermite cubic spline collocation systems, SIAM J. Numer. Anal. 36 (1999) 1962--1975.
+\bibitem{bialecki1995matrix} B. Bialecki, G. Fairweather, Matrix decomposition algorithms in orthogonal spline collocation for separable elliptic boundary value problems, SIAM J. Sci. Comput. 16 (1995) 330--347.
+\bibitem{bialecki2011matrix} B. Bialecki, G. Fairweather, A. Karageorghis, Matrix decomposition algorithms for elliptic boundary value problems: a survey, Numer. Algorithms 56 (2011) 253--295.
+\bibitem{shen2010numerical} J. Shen, X. Yang, Numerical approximations of Allen--Cahn and Cahn--Hilliard equations, Discrete Contin. Dyn. Syst. 28 (2010) 1669--1691.
 \bibitem{dorfler1996convergent} W. D\"orfler, A convergent adaptive algorithm for Poisson's equation, SIAM J. Numer. Anal. 33 (1996) 1106--1124.
 \bibitem{williams1952stress} M.L. Williams, Stress singularities resulting from various boundary conditions in angular corners of plates in extension, J. Appl. Mech. 19 (1952) 526--528.
 \bibitem{grisvard1985elliptic} P. Grisvard, Elliptic Problems in Nonsmooth Domains, Pitman, Boston, 1985.

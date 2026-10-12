@@ -1,0 +1,26 @@
+\textit{(a) Uniform grids}\\[2pt]
+\begin{tabular}{rr cc c}
+\toprule
+$N$ & unknowns & max error & rate & solve (s)\\
+\midrule
+8 & 512 & $9.40{\times}10^{-3}$ & -- & 0.0001\\
+16 & 4096 & $2.60{\times}10^{-3}$ & 1.86 & 0.0001\\
+32 & 32768 & $6.72{\times}10^{-4}$ & 1.95 & 0.0007\\
+64 & 262144 & $1.69{\times}10^{-4}$ & 1.99 & 0.0063\\
+96 & 884736 & $7.53{\times}10^{-5}$ & 2.00 & 0.0293\\
+\bottomrule
+\end{tabular}
+
+\medskip
+\textit{(b) Chebyshev-graded grids}\\[2pt]
+\begin{tabular}{rr cc c}
+\toprule
+$N$ & unknowns & max error & rate & solve (s)\\
+\midrule
+8 & 512 & $1.25{\times}10^{-2}$ & -- & 0.0001\\
+16 & 4096 & $4.34{\times}10^{-3}$ & 1.53 & 0.0003\\
+32 & 32768 & $1.21{\times}10^{-3}$ & 1.85 & 0.0014\\
+64 & 262144 & $3.10{\times}10^{-4}$ & 1.96 & 0.0070\\
+96 & 884736 & $1.38{\times}10^{-4}$ & 1.99 & 0.0306\\
+\bottomrule
+\end{tabular}

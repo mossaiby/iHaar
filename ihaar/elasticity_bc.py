@@ -299,6 +299,21 @@ class ElasticityMixed:
             den += (W * (g[2 * comp] ** 2 + g[2 * comp + 1] ** 2)).sum()
         return float(np.sqrt(num / den))
 
+    def cell_errors(self, Ue, Ve, field, ng=3):
+        """Squared absolute H1-seminorm error per 2D cell (Gauss quadrature)."""
+        ex, ey = self.ex, self.ey
+        xg, wg = np.polynomial.legendre.leggauss(ng)
+        def q(g):
+            return ((0.5 * (g.t[:-1, None] + g.t[1:, None]) + 0.5 * g.h[:, None] * xg[None, :]).ravel(),
+                    (0.5 * g.h[:, None] * wg[None, :]).ravel())
+        xq, wx = q(ex.g); yq, wy = q(ey.g)
+        Ex, Edx = ex.g.eval_matrices(xq); Ey, Edy = ey.g.eval_matrices(yq)
+        X, Y = np.meshgrid(xq, yq, indexing="ij"); gr = field.grad(X, Y); W = np.outer(wx, wy)
+        e2 = np.zeros_like(W)
+        for comp, A in ((0, Ue), (1, Ve)):
+            e2 += W * ((Edx @ A @ Ey.T - gr[2 * comp]) ** 2 + (Ex @ A @ Edy.T - gr[2 * comp + 1]) ** 2)
+        return e2.reshape(self.Nx, ng, self.Ny, ng).sum(axis=(1, 3))
+
     def edge_error(self, Ue, Ve, field):
         """Max displacement error on traction edges (relative)."""
         ex, ey = self.ex, self.ey

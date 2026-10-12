@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from ihaar.core import Grid1D, corrected_D2, Eig1D, TensorFDM, NeumannDCT
 from ihaar.phasefield import SAVPhaseField
 from ihaar.elasticity_bc import ElasticityMixed
-from ihaar.elasticity import (LAM_I as LAMB, WilliamsField, SmoothField, ElasticityTensor,
+from ihaar.elasticity import (SumField, BoundaryLayerField, LAM_I as LAMB, WilliamsField, SmoothField, ElasticityTensor,
                               dorfler, bisect)
 import matplotlib
 matplotlib.use("Agg")
@@ -80,12 +80,12 @@ def E1():
         if N <= 64:
             K = np.kron(A1, np.eye(N)) - np.kron(np.eye(N), g.D2)
             t0 = time.perf_counter(); np.linalg.solve(K, F.ravel()); row["dense"] = time.perf_counter() - t0
-        t0 = time.perf_counter(); sla.solve_sylvester(A1, -g.D2.T, F); row["bartels_stewart"] = time.perf_counter() - t0
+        row["bartels_stewart"] = med_time(lambda: sla.solve_sylvester(A1, -g.D2.T, F), reps=3)[0]
         t0 = time.perf_counter(); e = Eig1D(g.D2, symmetric=True); row["fdm_setup"] = time.perf_counter() - t0
         fd = TensorFDM([e, e])
-        t0 = time.perf_counter(); fd.solve_diag(F, 1 - fd.lam_sum); row["fdm_gemm"] = time.perf_counter() - t0
+        row["fdm_gemm"] = med_time(lambda: fd.solve_diag(F, 1 - fd.lam_sum), reps=5)[0]
         fdd = NeumannDCT(N, 2, g.h[0])
-        t0 = time.perf_counter(); fdd.solve_diag(F, 1 - fdd.lam_sum); row["dct"] = time.perf_counter() - t0
+        row["dct"] = med_time(lambda: fdd.solve_diag(F, 1 - fdd.lam_sum), reps=5)[0]
         rows.append(row)
     out["cost"] = rows
     save("E1", out)
@@ -421,6 +421,23 @@ def _grad_mag(u, N):
     return np.hypot(ux, uy)
 
 
+def E7b():
+    """Traction collocation on graded grids (Chebyshev; geometric toward the traction edge)."""
+    f = SmoothField(); out = {}
+    def geo(N):
+        r = 1.15 ** (32 / N); w = (r ** np.arange(N))[::-1]; return np.r_[0, np.cumsum(w) / w.sum()]
+    cheb = lambda N: 0.5 * (1 - np.cos(np.pi * np.linspace(0, 1, N + 1)))
+    for name, gx, gy in (("chebyshev", cheb, cheb), ("geometric", lambda N: np.linspace(0, 1, N + 1), geo)):
+        rows = []
+        for N in (16, 32, 64, 128):
+            tx, ty = gx(N), gy(N); el = ElasticityMixed(tx, ty, {"T": "T", "R": "T"})
+            Ue, Ve, its, _ = el.solve(f, body_fn=f.body)
+            rows.append(dict(N=N, eH1=el.errors_gauss(Ue, Ve, f), eedge=el.edge_error(Ue, Ve, f), its=its, condV=float(el.condV),
+                             hratio=float(max(np.diff(tx).max() / np.diff(tx).min(), np.diff(ty).max() / np.diff(ty).min()))))
+        out[name] = rows
+    save("E7b", out); print("E7b", out)
+
+
 def E8a():
     from ihaar.elasticity_bc import Ext1D
     eps = 0.01; rows = []
@@ -688,12 +705,25 @@ def E10():
     from ihaar.fem_q2 import solve_q2
     fld = WilliamsField(apex=(0.0, 1.0)); bc = {"T": "T"}; out = {"uniform": [], "adaptive": []}
     D = ("L", "R", "B")
+    def nbytes(obj, seen=None):
+        seen = set() if seen is None else seen
+        if id(obj) in seen: return 0
+        seen.add(id(obj))
+        if isinstance(obj, np.ndarray): return obj.nbytes
+        if isinstance(obj, dict): return sum(nbytes(v, seen) for v in obj.values())
+        if isinstance(obj, (list, tuple)): return sum(nbytes(v, seen) for v in obj)
+        if hasattr(obj, "__dict__"): return sum(nbytes(v, seen) for v in vars(obj).values())
+        return 0
     def row_for(tx, ty, extra):
-        el = ElasticityMixed(tx, ty, bc); t0 = time.perf_counter(); Ue, Ve, its, _ = el.solve(fld); ti = time.perf_counter() - t0
-        r = dict(extra, cells=int((len(tx) - 1) * (len(ty) - 1)), ihwc_dofs=2 * el.nunk, ihwc_e=el.errors_gauss(Ue, Ve, fld), ihwc_t=ti, ihwc_its=its)
+        t0 = time.perf_counter(); el = ElasticityMixed(tx, ty, bc); tset = time.perf_counter() - t0
+        ti, (Ue, Ve, its, _) = med_time(lambda: el.solve(fld), reps=3)
+        mem = nbytes(el) + 81 * 2 * el.nunk * 8          # operators + GMRES(80) Krylov basis
+        r = dict(extra, cells=int((len(tx) - 1) * (len(ty) - 1)), ihwc_dofs=2 * el.nunk, ihwc_e=el.errors_gauss(Ue, Ve, fld),
+                 ihwc_t=ti, ihwc_setup=tset, ihwc_its=its, ihwc_mem=mem)
         q2d = 2 * (2 * len(tx) - 1) * (2 * len(ty) - 1)
-        e, d, t, inf = solve_q2(tx, ty, fld, dirichlet=D, solver="pcg", return_info=True)
-        r.update(q2_dofs=d, q2_e=e, q2pcg_t=t, q2pcg_its=inf["its"])
+        reps = [solve_q2(tx, ty, fld, dirichlet=D, solver="pcg", return_info=True) for _ in range(3)]
+        e, d, _, inf = reps[0]; t = float(np.median([q[2] for q in reps]))
+        r.update(q2_dofs=d, q2_e=e, q2pcg_t=t, q2pcg_its=inf["its"], q2_assembly=inf["assembly"], q2pcg_setup=inf["setup"], q2pcg_mem=inf["mem"])
         if q2d < 2.6e5:
             r["q2direct_t"] = solve_q2(tx, ty, fld, dirichlet=D)[2]
         return r, el, Ue, Ve
@@ -705,6 +735,8 @@ def E10():
         if r["q2_dofs"] > 6e5 or r["ihwc_dofs"] > 1.5e5: break
         etx, ety = el.indicators(Ue, Ve); mx, my = dorfler(etx, ety, 0.6); tx = bisect(tx, mx); ty = bisect(ty, my)
     save("E10", out)
+    print("E10 end-to-end", [(r["ihwc_dofs"], "%.2f+%.2f" % (r["ihwc_setup"], r["ihwc_t"]), "%.1fMB" % (r["ihwc_mem"]/1e6),
+                              r["q2_dofs"], "%.2f+%.2f+%.2f" % (r["q2_assembly"], r["q2pcg_setup"], r["q2pcg_t"]), "%.1fMB" % (r["q2pcg_mem"]/1e6)) for r in out["adaptive"][::3]])
     print("E10 adapt", [(r["ihwc_dofs"], "%.2e" % r["ihwc_e"], "%.2f" % r["ihwc_t"], r["q2_dofs"], "%.2e" % r["q2_e"],
                          "%.2f" % r["q2pcg_t"], r["q2pcg_its"], "%.2f" % r.get("q2direct_t", -1)) for r in out["adaptive"][::3]])
     fig, ax = plt.subplots(1, 2, figsize=(7.6, 3.1))
@@ -742,6 +774,259 @@ def E11():
                                  hratio_note="global h_max/h_min <= e^14 ~ 1.2e6"))
                 print("E11", rows[-1], flush=True)
     save("E11", rows)
+
+
+def E12():
+    """(a) Accuracy of fast diagonalization vs Bartels-Stewart (backward stable) on badly graded grids;
+       (b) kappa(V) growth with N and grading; (c) overhead of tensor vs local refinement."""
+    import scipy.linalg as sla
+    rng = np.random.default_rng(7); out = {"fdm_vs_bs": [], "overhead": {}}
+    for rmax in (1.5, 2.0, 4.0):
+        for N in (32, 64, 128, 256):
+            worst = None
+            for _ in range(20):
+                lr = rng.uniform(-np.log(rmax), np.log(rmax), N - 1)
+                h = np.exp(np.clip(np.r_[0, np.cumsum(lr)], -7, 7)); t = np.r_[0, np.cumsum(h)] / h.sum()
+                g = Grid1D(t, "D"); e = Eig1D(g.D2)
+                if worst is None or e.condV > worst[1].condV: worst = (g, e)
+            g, e = worst; F = rng.standard_normal((N, N))
+            fd = TensorFDM([e, e]); U1 = fd.solve_diag(F, fd.lam_sum)
+            U2 = sla.solve_sylvester(g.D2, g.D2.T, F)
+            res = lambda U: np.linalg.norm(g.D2 @ U + U @ g.D2.T - F) / (np.linalg.norm(g.D2, 2) * 2 * np.linalg.norm(U) + np.linalg.norm(F))
+            out["fdm_vs_bs"].append(dict(rmax=rmax, N=N, condV=float(e.condV), rel_diff=float(np.linalg.norm(U1 - U2) / np.linalg.norm(U2)),
+                                         backward_fdm=float(res(U1)), backward_bs=float(res(U2)),
+                                         hratio=float(np.diff(g.t).max() / np.diff(g.t).min())))
+            print("E12a", out["fdm_vs_bs"][-1], flush=True)
+    # tensor-refinement overhead: cells of the tensor grid vs a local (quadtree-like) grid with the
+    # same local resolution, estimated by covering each tensor cell with squares of size max(hx, hy)
+    for name, key in (("dirichlet", "E2"), ("traction", "E7")):
+        J = json.load(open(os.path.join(RES, key + ".json")))
+        gx, gy = (J["grids"]["final"] if "final" in J["grids"] else J["grids"][max(J["grids"], key=lambda k: int(k) if k.isdigit() else -1)])
+        hx, hy = np.diff(gx), np.diff(gy); H = np.maximum.outer(hx, hy)
+        local = float((np.outer(hx, hy) / H ** 2).sum()); tensor = int(hx.size * hy.size)
+        out["overhead"][name] = dict(tensor_cells=tensor, local_equiv=local, ratio=tensor / local)
+        print("E12c", name, out["overhead"][name])
+    save("E12", out)
+
+
+# ---------------------------------------------------------------------------
+# Environment metadata and timing helper
+# ---------------------------------------------------------------------------
+def environment():
+    import platform, subprocess
+    cpu = "unknown"
+    try:
+        cpu = [l.split(":", 1)[1].strip() for l in open("/proc/cpuinfo") if l.startswith("model name")][0]
+    except Exception:
+        cpu = platform.processor()
+    blas = "unknown"
+    try:
+        cfg = np.show_config(mode="dicts")["Build Dependencies"]["blas"]; blas = f"{cfg.get('name')} {cfg.get('version')}"
+    except Exception:
+        pass
+    env = dict(cpu=cpu, os=f"{platform.system()} {platform.release()}", python=platform.python_version(),
+               numpy=np.__version__, scipy=__import__("scipy").__version__, blas=blas,
+               threads=os.environ.get("OMP_NUM_THREADS", "default"), logical_cpus=os.cpu_count(),
+               timing="wall-clock time.perf_counter(); median of repeated runs where stated; setup reported separately")
+    save("environment", env); return env
+
+
+def med_time(fn, reps=3):
+    ts = []; out = None
+    for _ in range(reps):
+        t0 = time.perf_counter(); out = fn(); ts.append(time.perf_counter() - t0)
+    return float(np.median(ts)), out
+
+
+# ---------------------------------------------------------------------------
+# E13: Q2 FEM with algebraic multigrid (requires pyamg; run where available)
+# ---------------------------------------------------------------------------
+def E13():
+    """Q2 FEM with CG preconditioned by smoothed-aggregation AMG (pyamg) on the IHWC-adapted
+    grids of E10. Writes results/E13.json; skipped if pyamg is not installed."""
+    try:
+        import pyamg  # noqa: F401
+    except ImportError:
+        print("E13 skipped: pip install pyamg"); return
+    from ihaar.fem_q2 import solve_q2
+    fld = WilliamsField(apex=(0.0, 1.0)); bc = {"T": "T"}; rows = []
+    tx = ty = np.linspace(0, 1, 9)
+    for cyc in range(200):
+        el = ElasticityMixed(tx, ty, bc); Ue, Ve, its, _ = el.solve(fld)
+        e, d, t, inf = solve_q2(tx, ty, fld, dirichlet=("L", "R", "B"), solver="amg", return_info=True)
+        rows.append(dict(cycle=cyc, q2_dofs=d, q2_e=e, amg_setup=inf["setup"], amg_solve=t, amg_its=inf["its"], amg_mem=inf["mem"]))
+        print("E13", rows[-1], flush=True)
+        if d > 6e5: break
+        etx, ety = el.indicators(Ue, Ve); mx, my = dorfler(etx, ety, 0.6); tx = bisect(tx, mx); ty = bisect(ty, my)
+    save("E13", rows)
+
+
+# ---------------------------------------------------------------------------
+# E14: three-dimensional manufactured problem on uniform and graded grids
+# ---------------------------------------------------------------------------
+def E14():
+    """(I - Laplace) u = f on (0,1)^3, prescribed values, exact u smooth; 3D fast diagonalization."""
+    ue = lambda x, y, z: np.exp(x + 0.5 * y - z / 3) + np.sin(np.pi * x) * np.sin(2 * np.pi * y) * np.cos(np.pi * z)
+    def lap(x, y, z):
+        a = np.exp(x + 0.5 * y - z / 3) * (1 + 0.25 + 1 / 9)
+        b = -(1 + 4 + 1) * np.pi ** 2 * np.sin(np.pi * x) * np.sin(2 * np.pi * y) * np.cos(np.pi * z)
+        return a + b
+    rows = []
+    for name, mk in (("uniform", lambda N: np.linspace(0, 1, N + 1)),
+                     ("graded", lambda N: 0.5 * (1 - np.cos(np.pi * np.linspace(0, 1, N + 1))))):
+        for N in (8, 16, 32, 64, 96):
+            g = Grid1D(mk(N), "D"); m = g.x
+            X, Y, Z = np.meshgrid(m, m, m, indexing="ij")
+            F = ue(X, Y, Z) - lap(X, Y, Z)
+            # boundary contributions of -Laplace along each direction
+            o0, o1 = 0 * m, 1 + 0 * m
+            Yf, Zf = np.meshgrid(m, m, indexing="ij")
+            F += np.einsum("i,jk->ijk", g.e0, ue(0 * Yf, Yf, Zf)) + np.einsum("i,jk->ijk", g.e1, ue(1 + 0 * Yf, Yf, Zf))
+            F += np.einsum("j,ik->ijk", g.e0, ue(Yf, 0 * Yf, Zf)) + np.einsum("j,ik->ijk", g.e1, ue(Yf, 1 + 0 * Yf, Zf))
+            F += np.einsum("k,ij->ijk", g.e0, ue(Yf, Zf, 0 * Yf)) + np.einsum("k,ij->ijk", g.e1, ue(Yf, Zf, 1 + 0 * Yf))
+            e = Eig1D(g.D2); fd = TensorFDM([e, e, e])
+            t, U = med_time(lambda: fd.solve_diag(F, 1 - fd.lam_sum), reps=3)
+            rows.append(dict(grid=name, N=N, unknowns=N ** 3, err=float(np.abs(U - ue(X, Y, Z)).max()), time=t, condV=float(e.condV)))
+            print("E14", rows[-1], flush=True)
+    save("E14", rows)
+
+
+# ---------------------------------------------------------------------------
+# E15: sensitivity of the SAV stabilization S (thin interfaces)
+# ---------------------------------------------------------------------------
+def E15_stage(stage, eps=0.004, N=384):
+    """Resumable sensitivity study of the SAV stabilization S (thin interfaces).
+    stage 'init': coarsened state u0; 'ref': reference (S=4, dt=eps^2/4); 'dtM': runs with dt = M eps^2
+    for S in {0,1,2,4,8} over T = 2000 eps^2. S has the units of f'(u) and is independent of eps and h."""
+    tag = f"E15_{eps:g}_{N}"; p = lambda n: os.path.join(RES, f"{tag}_{n}.npy")
+    T = 2000 * eps ** 2
+    if stage == "init":
+        rng = np.random.default_rng(3)
+        s = SAVPhaseField(N, 2, eps, 0.1 * eps ** 2, "CH", 4, transform="dct", S=4.0); s.initialize(0.02 * rng.uniform(-1, 1, (N, N)))
+        for n in range(1000): s.step()
+        s2 = SAVPhaseField(N, 2, eps, eps ** 2, "CH", 4, transform="dct", S=4.0); s2.initialize(s.u)
+        for n in range(1000): s2.step()
+        np.save(p("u0"), s2.u); return
+    u0 = np.load(p("u0"))
+    if stage == "ref":
+        ref = SAVPhaseField(N, 2, eps, eps ** 2 / 4, "CH", 4, transform="dct", S=4.0); ref.initialize(u0)
+        for n in range(8000): ref.step()
+        np.save(p("ref"), ref.u); return
+    mult = int(stage[2:]); uref = np.load(p("ref")); rows = []
+    for S in (0.0, 1.0, 2.0, 4.0, 8.0):
+        dt = mult * eps ** 2; s = SAVPhaseField(N, 2, eps, dt, "CH", 4, transform="dct", S=S); s.initialize(u0)
+        umax = 0.0; E = [s.energy(s.u)]
+        for n in range(int(round(T / dt))):
+            s.step(); umax = max(umax, float(np.abs(s.u).max()))
+            if n % 10 == 0: E.append(s.energy(s.u, s.uhat))
+        rows.append(dict(eps=eps, N=N, nodes=float(np.sqrt(2) * eps * N), dt_over_eps2=mult, S=S, umax=umax,
+                         err=float(np.abs(s.u - uref).max()), xi=float(s.r / np.sqrt(s.E1(s.u) + s.C)), max_dE=float(np.diff(E).max())))
+        print("E15", rows[-1], flush=True)
+    old = R8("E15") if os.path.exists(os.path.join(RES, "E15.json")) else []
+    save("E15", [r for r in old if not (r["eps"] == eps and r["N"] == N and r["dt_over_eps2"] == mult)] + rows)
+
+
+# ---------------------------------------------------------------------------
+# E16: broader adaptivity tests and comparison with a true-error oracle
+# ---------------------------------------------------------------------------
+def _adaptive_run(field, bc, body=None, oracle=False, max_dofs=6e4, theta=0.6):
+    tx = ty = np.linspace(0, 1, 9); rows = []; ttot = 0.0
+    for cyc in range(200):
+        t0 = time.perf_counter(); el = ElasticityMixed(tx, ty, bc); Ue, Ve, its, _ = el.solve(field, body_fn=body); ttot += time.perf_counter() - t0
+        e = el.errors_gauss(Ue, Ve, field); etx, ety = el.indicators(Ue, Ve)
+        ce = el.cell_errors(Ue, Ve, field); eabs = float(np.sqrt(ce.sum()))
+        rows.append(dict(cycle=cyc, dofs=2 * el.nunk, eH1=e, eabs=eabs, eta=float(np.sqrt(etx.sum() + ety.sum())), its=its, time=ttot))
+        if 2 * el.nunk > max_dofs: break
+        if oracle:
+            mx, my = dorfler(ce.sum(axis=1), ce.sum(axis=0), theta)
+        else:
+            mx, my = dorfler(etx, ety, theta)
+        tx = bisect(tx, mx); ty = bisect(ty, my)
+    x = np.array([r["dofs"] for r in rows], float); y = np.array([r["eH1"] for r in rows]); m = x > 2000
+    rate = float(np.polyfit(np.log(x[m]), np.log(y[m]), 1)[0]) if m.sum() >= 3 else float("nan")
+    eff = np.array([r["eta"] / r["eabs"] for r in rows])
+    return dict(rows=rows, rate=rate, eff_min=float(eff.min()), eff_max=float(eff.max()), cycles=len(rows), time=ttot)
+
+
+def E16():
+    out = {}
+    cases = {}
+    for om in (1.25, 1.5, 1.75, 1.95):
+        f = WilliamsField(apex=(0.0, 1.0), bisector=2 * np.pi - om * np.pi / 2, omega=om * np.pi)
+        cases[f"face_omega_{om:.2f}pi"] = (f, {"T": "T"}, None, float(f.l))
+    f2 = SumField(WilliamsField(apex=(0.0, 1.0)), WilliamsField(apex=(1.0, 1.0), bisector=1.75 * np.pi))
+    cases["two_singularities"] = (f2, {"T": "T"}, None, LAMB)
+    bl = BoundaryLayerField(0.01)
+    cases["boundary_layer"] = (bl, {}, bl.body, None)
+    for name, (f, bc, body, lam) in cases.items():
+        r = dict(lam=lam)
+        for mode in ("indicator", "oracle"):
+            res = _adaptive_run(f, bc, body, oracle=(mode == "oracle"))
+            r[mode] = res
+        t = np.linspace(0, 1, 129); el = ElasticityMixed(t, t, bc); Ue, Ve, its, _ = el.solve(f, body_fn=body)
+        r["uniform128"] = dict(dofs=2 * el.nunk, eH1=el.errors_gauss(Ue, Ve, f))
+        out[name] = r
+        print("E16", name, "lam", lam, "rate ind %.2f oracle %.2f" % (r["indicator"]["rate"], r["oracle"]["rate"]),
+              "final ind %.2e oracle %.2e unif %.2e" % (r["indicator"]["rows"][-1]["eH1"], r["oracle"]["rows"][-1]["eH1"], r["uniform128"]["eH1"]),
+              "eff %.2f-%.2f" % (r["indicator"]["eff_min"], r["indicator"]["eff_max"]), "cycles", r["indicator"]["cycles"], "time %.1fs" % r["indicator"]["time"], flush=True)
+    save("E16", out)
+    fig, axs = plt.subplots(2, 3, figsize=(10, 6))
+    for a, (name, r) in zip(axs.ravel(), out.items()):
+        for mode, st in (("indicator", ".-"), ("oracle", "x--")):
+            R_ = r[mode]["rows"]; a.loglog([q["dofs"] for q in R_], [q["eH1"] for q in R_], st, ms=3, label=f"{mode} (rate {r[mode]['rate']:.2f})")
+        a.loglog([r["uniform128"]["dofs"]], [r["uniform128"]["eH1"]], "ko", label="uniform $128^2$")
+        a.set_title(name.replace("_", " ").replace("pi", r"$\pi$"), fontsize=8); a.legend(fontsize=6); a.set_xlabel("unknowns", fontsize=7)
+    fig.tight_layout(); fig.savefig(os.path.join(FIG, "adaptivity_cases.pdf")); plt.close(fig)
+
+
+# ---------------------------------------------------------------------------
+# E17: adversarial grids, safeguard and fallback cost
+# ---------------------------------------------------------------------------
+def E17():
+    import scipy.linalg as sla
+    from ihaar.core import SafeguardedSylvester
+    rng = np.random.default_rng(11)
+    def fam(name, N):
+        if name.startswith("alternating"):
+            r = float(name.split("_")[1]); h = np.where(np.arange(N) % 2 == 0, 1.0, r)
+        elif name.startswith("tiny_ends"):
+            r = float(name.split("_")[2]); h = np.ones(N); h[0] = h[-1] = r
+        elif name.startswith("geometric"):
+            R_ = float(name.split("_")[1]); h = R_ ** (np.arange(N) / (N - 1))
+        elif name == "random_unbounded":
+            h = 10 ** rng.uniform(-6, 0, N)
+        elif name == "cluster":
+            h = np.ones(N); h[N // 3:N // 3 + N // 4] = 1e-4
+        return np.r_[0, np.cumsum(h)] / h.sum()
+    names = ["alternating_10", "alternating_100", "alternating_1000", "tiny_ends_1e-6", "geometric_1e6", "geometric_1e12", "random_unbounded", "cluster"]
+    rows = []
+    for nm in names:
+        for N in (64, 256):
+            for bc in ("D", "N"):
+                t = fam(nm, N); g = Grid1D(t, bc)
+                lam = np.linalg.eigvals(g.D2); im = float(np.abs(lam.imag).max() / np.abs(lam).max())
+                if bc == "N":   # pure Neumann Sylvester is singular: test the shifted operator (I - Lap)
+                    a, gsh = 1.0, -1.0
+                else:
+                    a, gsh = 1.0, 0.0
+                F = rng.standard_normal((N, N))
+                sv = SafeguardedSylvester(g.D2, g.D2, a, a, gsh, kappa_max=np.inf, eta_max=np.inf)
+                U1 = sv.solve(F); eta_fdm = sv.last_eta
+                A = g.D2 + 0.5 * gsh * np.eye(N); U2 = sla.solve_sylvester(A, A.T, F); eta_bs = sv.backward_error(U2, F)
+                rows.append(dict(family=nm, N=N, bc=bc, hratio=float(np.diff(t).max() / np.diff(t).min()), max_rel_imag=im,
+                                 condV=float(sv.kappa), eta_fdm=float(eta_fdm), eta_bs=float(eta_bs),
+                                 rel_diff=float(np.linalg.norm(U1 - U2) / np.linalg.norm(U2))))
+                print("E17", rows[-1], flush=True)
+    # cost of the fallback
+    cost = []
+    for N in (128, 256, 512):
+        g = Grid1D(0.5 * (1 - np.cos(np.pi * np.linspace(0, 1, N + 1))), "D"); F = rng.standard_normal((N, N))
+        sv = SafeguardedSylvester(g.D2, g.D2)
+        t_fdm, _ = med_time(lambda: sv.solve(F), reps=5)
+        t_bs, _ = med_time(lambda: sla.solve_sylvester(g.D2, g.D2.T, F), reps=3)
+        cost.append(dict(N=N, fdm_with_check=t_fdm, bartels_stewart=t_bs, ratio=t_bs / t_fdm))
+        print("E17 cost", cost[-1], flush=True)
+    save("E17", dict(adversarial=rows, cost=cost))
 
 
 # ---------------------------------------------------------------------------
@@ -782,7 +1067,7 @@ def E6(gpu=False):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("--only", default="E1,E2,E3,E4,E5,E7,E7b,E8a,E8b,E8c,E8d,E8fig,E9,E10,E11,E6")
+    ap.add_argument("--only", default="E1,E2,E3,E4,E5,E7,E7b,E8a,E8b,E8c,E8d,E8fig,E9,E10,E11,E12,E14,E15_init_0.004_384,E15_ref_0.004_384,E15_dt1_0.004_384,E15_dt8_0.004_384,E15_dt32_0.004_384,E16,E17,E13,E6")
     ap.add_argument("--gpu", action="store_true")
     a = ap.parse_args()
     for name in a.only.split(","):
@@ -791,8 +1076,16 @@ if __name__ == "__main__":
             E6(a.gpu)
         elif name.startswith("E8c_stage"):
             E8c_stage(int(name[-1]))
+        elif name.startswith("E15_"):
+            _, st, ep, nn = name.split("_")       # e.g. E15_init_0.004_384
+            E15_stage(st, eps=float(ep), N=int(nn))
+        elif name == "env":
+            print(environment())
         elif name == "E8c_finalize":
             E8c_finalize()
         else:
+            if not callable(globals().get(name)):
+                raise SystemExit(f"unknown experiment '{name}'. Available: " +
+                                 ", ".join(k for k, v in globals().items() if k[:1] == "E" and k[1:2].isdigit() and callable(v)))
             globals()[name]()
         print(f"[{name} done in {time.time() - t0:.1f}s]", flush=True)

@@ -73,6 +73,7 @@ def solve_q2(tx, ty, field, E=1.0, nu=0.3, dirichlet=("L", "R", "B", "T"), solve
     With return_info=True also returns dict(its=..., setup=...)."""
     import time
     import scipy.linalg as sla
+    ta = time.perf_counter()
     mx, my = Q2Mesh1D(tx), Q2Mesh1D(ty)
     lm = E * nu / ((1 + nu) * (1 - 2 * nu)); mu = E / (2 * (1 + nu))
     kron = sp.kron
@@ -93,11 +94,29 @@ def solve_q2(tx, ty, field, E=1.0, nu=0.3, dirichlet=("L", "R", "B", "T"), solve
     free = ~fixed
     rhs = -K[free][:, fixed] @ g[fixed]
     Kff = K[free][:, free].tocsr()
-    info = dict(its=0, setup=0.0)
+    info = dict(its=0, setup=0.0, assembly=time.perf_counter() - ta,
+                mem=Kff.data.nbytes + Kff.indices.nbytes + Kff.indptr.nbytes)
     if solver == "direct":
         t0 = time.perf_counter()
         sol = spla.spsolve(Kff.tocsc(), rhs)
         tsolve = time.perf_counter() - t0
+    elif solver == "amg":
+        import pyamg
+        # rigid-body modes (near-nullspace) for 2D elasticity on the free nodes
+        fx = np.ones(nx, bool); fy = np.ones(ny, bool)
+        XN, YN = np.meshgrid(mx.nodes, my.nodes, indexing="ij")
+        Bm = np.zeros((2 * n, 3)); Bm[:n, 0] = 1; Bm[n:, 1] = 1
+        Bm[:n, 2] = -YN.ravel(); Bm[n:, 2] = XN.ravel()
+        Bm = Bm[free]
+        t0 = time.perf_counter()
+        ml = pyamg.smoothed_aggregation_solver(Kff, B=Bm, strength="symmetric", max_coarse=500)
+        info["setup"] = time.perf_counter() - t0
+        info["mem"] += sum(l.A.data.nbytes + l.A.indices.nbytes for l in ml.levels)
+        res = []
+        t0 = time.perf_counter()
+        sol = ml.solve(rhs, tol=tol, accel="cg", residuals=res, maxiter=2000)
+        tsolve = time.perf_counter() - t0
+        info["its"] = len(res) - 1
     else:
         # free node sets are tensor products of 1D free sets
         fx = np.ones(nx, bool); fy = np.ones(ny, bool)
@@ -112,6 +131,7 @@ def solve_q2(tx, ty, field, E=1.0, nu=0.3, dirichlet=("L", "R", "B", "T"), solve
         a, b = lm + 2 * mu, mu
         Du = a * lx[:, None] + b * ly[None, :]; Dv = b * lx[:, None] + a * ly[None, :]
         info["setup"] = time.perf_counter() - t0
+        info["mem"] += Vx.nbytes + Vy.nbytes + Du.nbytes + Dv.nbytes + 5 * rhs.nbytes
         mxf, myf = fx.sum(), fy.sum(); m = mxf * myf
 
         def prec(r):

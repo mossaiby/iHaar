@@ -1,0 +1,11 @@
+{
+ "cpu": "Intel(R) Xeon(R) Processor @ 2.80GHz",
+ "os": "Linux 6.18.44-fc-v114",
+ "python": "3.12.3",
+ "numpy": "2.4.4",
+ "scipy": "1.17.1",
+ "blas": "scipy-openblas 0.3.31.188.0",
+ "threads": "default",
+ "logical_cpus": 1,
+ "timing": "wall-clock time.perf_counter(); median of repeated runs where stated; setup reported separately"
+}
