@@ -2,20 +2,14 @@
 
 Repository: https://github.com/mossaiby/iHaar
 
-## Publishing this repository (required before submission)
-The paper cites this URL and a tagged release. This folder is already a git repository with the
-commit and tag `v1.0`. To publish:
-```
-# 1. create an EMPTY public repository named iHaar under github.com/mossaiby (no README/license)
-git remote add origin https://github.com/mossaiby/iHaar.git
-git push -u origin main
-git push origin v1.0
-# 2. on GitHub: Releases -> Draft a new release -> choose tag v1.0 -> Publish
-# 3. archive: log in to zenodo.org with GitHub, enable the iHaar repository under
-#    "GitHub" settings *before* step 2 (or re-publish the release), and copy the DOI
-# 4. put the DOI into \newcommand{\archive}{...} in paper/manuscript.tex and paper/manuscript_lean.tex
-```
-Check afterwards that the URL opens in a private/incognito browser window.
+## Citing
+If you use this code, please cite the accompanying paper (reference to be added on publication) and the
+archived software release:
+
+> F. Mossaiby, *iHaar: integrated-Haar (quadratic-spline) collocation with fast tensor solvers*, version 1.0,
+> https://github.com/mossaiby/iHaar, DOI: *to be added (Zenodo)*.
+
+GitHub's "Cite this repository" button uses `CITATION.cff`. The version used for the paper is the tag `v1.0`.
 
 ```
 git clone https://github.com/mossaiby/iHaar.git
@@ -67,7 +61,7 @@ python paper/tools/make_supplement.py
 cd paper && latexmk -pdf manuscript.tex manuscript_lean.tex supplementary.tex   # needs elsarticle.cls
 ```
 
-## GPU (required before submission)
+## GPU runs
 On a machine with an NVIDIA GPU (check with `nvidia-smi`):
 ```
 cd iHaar
@@ -80,7 +74,7 @@ cd paper && latexmk -pdf manuscript.tex
 `make_tables.py` writes `paper/tables/gpu_note.tex`. While `results/E6_gpu.json` is missing it contains
 the red TODO; once the file exists it is a sentence naming the GPU model and the CUDA and CuPy versions.
 
-## AMG baseline for the FEM comparison (recommended before submission)
+## AMG baseline for the FEM comparison
 ```
 pip install -r requirements.txt   # includes pyamg
 python experiments/run_all.py --only E13
