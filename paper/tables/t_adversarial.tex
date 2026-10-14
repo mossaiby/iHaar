@@ -1,23 +1,48 @@
-\begin{tabular}{p{3.3cm}c c c ccc}
+\textit{(a) Grid, eigenvector conditioning and condition estimate of the Sylvester problem}\\[2pt]
+\begin{tabular}{p{0.30\textwidth}c c c c}
 \toprule
-& & & & \multicolumn{2}{c}{backward error} & solution\\
-grid family ($N=256$) & ends & $h_{\max}/h_{\min}$ & $\kappa(V)$ & FDM & B--S & difference\\
+grid family ($N=256$) & ends & $h_{\max}/h_{\min}$ & $\kappa(V)$ & $\kappa_{\mathrm{Syl}}$\\
 \midrule
-alternating, ratio 10 & values & $1{\times}10^{1}$ & 2.1 & $4{\times}10^{-16}$ & $6{\times}10^{-16}$ & $2{\times}10^{-12}$\\
-alternating, ratio 10 & slope & $1{\times}10^{1}$ & 2.5 & $1{\times}10^{-15}$ & $2{\times}10^{-15}$ & $3{\times}10^{-10}$\\
-alternating, ratio 100 & values & $1{\times}10^{2}$ & 2.4 & $5{\times}10^{-17}$ & $6{\times}10^{-17}$ & $3{\times}10^{-11}$\\
-alternating, ratio 100 & slope & $1{\times}10^{2}$ & 2.9 & $1{\times}10^{-15}$ & $2{\times}10^{-15}$ & $3{\times}10^{-10}$\\
-alternating, ratio 1000 & values & $1{\times}10^{3}$ & 2.4 & $1{\times}10^{-17}$ & $6{\times}10^{-18}$ & $3{\times}10^{-10}$\\
-alternating, ratio 1000 & slope & $1{\times}10^{3}$ & 2.9 & $4{\times}10^{-15}$ & $2{\times}10^{-15}$ & $4{\times}10^{-9}$\\
-end cells $10^{-6}$ & values & $1{\times}10^{6}$ & 1.0 & $6{\times}10^{-16}$ & $2{\times}10^{-17}$ & $4{\times}10^{-1}$\\
-end cells $10^{-6}$ & slope & $1{\times}10^{6}$ & 3.1 & $7{\times}10^{-15}$ & $1{\times}10^{-16}$ & $6{\times}10^{-7}$\\
-geometric, $10^6$ & values & $1{\times}10^{6}$ & 8.8 & $5{\times}10^{-22}$ & $3{\times}10^{-22}$ & $3{\times}10^{-13}$\\
-geometric, $10^6$ & slope & $1{\times}10^{6}$ & 47.5 & $5{\times}10^{-17}$ & $5{\times}10^{-17}$ & $1{\times}10^{-7}$\\
-geometric, $10^{12}$ & values & $1{\times}10^{12}$ & 6.4 & $6{\times}10^{-28}$ & $1{\times}10^{-16}$ & $6{\times}10^{7}$\\
-geometric, $10^{12}$ & slope & $1{\times}10^{12}$ & 82.8 & $4{\times}10^{-17}$ & $1{\times}10^{-16}$ & $2{\times}10^{10}$\\
-random, unbounded & values & $9{\times}10^{5}$ & 13.2 & $1{\times}10^{-15}$ & $7{\times}10^{-17}$ & $2{\times}10^{-5}$\\
-random, unbounded & slope & $9{\times}10^{5}$ & 15.4 & $4{\times}10^{-15}$ & $2{\times}10^{-16}$ & $9{\times}10^{-4}$\\
-cluster of $10^{-4}$ cells & values & $1{\times}10^{4}$ & 40.0 & $5{\times}10^{-16}$ & $1{\times}10^{-16}$ & $2{\times}10^{-6}$\\
-cluster of $10^{-4}$ cells & slope & $1{\times}10^{4}$ & 40.0 & $4{\times}10^{-16}$ & $1{\times}10^{-16}$ & $2{\times}10^{-4}$\\
+alternating, ratio 10 & values & $1{\times}10^{1}$ & 2 & $3{\times}10^{6}$\\
+alternating, ratio 10 & slope & $1{\times}10^{1}$ & 2 & $2{\times}10^{7}$\\
+alternating, ratio 100 & values & $1{\times}10^{2}$ & 2 & $3{\times}10^{8}$\\
+alternating, ratio 100 & slope & $1{\times}10^{2}$ & 3 & $2{\times}10^{8}$\\
+alternating, ratio 1000 & values & $1{\times}10^{3}$ & 2 & $3{\times}10^{10}$\\
+alternating, ratio 1000 & slope & $1{\times}10^{3}$ & 3 & $2{\times}10^{9}$\\
+end cells $10^{-6}$ & values & $1{\times}10^{6}$ & 1 & $2{\times}10^{16}$\\
+end cells $10^{-6}$ & slope & $1{\times}10^{6}$ & 3 & $3{\times}10^{12}$\\
+geometric, $10^6$ & values & $1{\times}10^{6}$ & 9 & $2{\times}10^{16}$\\
+geometric, $10^6$ & slope & $1{\times}10^{6}$ & 47 & $9{\times}10^{18}$\\
+geometric, $10^{12}$ & values & $1{\times}10^{12}$ & 6 & $3{\times}10^{27}$\\
+geometric, $10^{12}$ & slope & $1{\times}10^{12}$ & 83 & $6{\times}10^{30}$\\
+random, unbounded & values & $9{\times}10^{5}$ & 13 & $2{\times}10^{16}$\\
+random, unbounded & slope & $9{\times}10^{5}$ & 15 & $2{\times}10^{16}$\\
+cluster of $10^{-4}$ cells & values & $1{\times}10^{4}$ & 40 & $5{\times}10^{15}$\\
+cluster of $10^{-4}$ cells & slope & $1{\times}10^{4}$ & 40 & $9{\times}10^{16}$\\
+\bottomrule
+\end{tabular}
+
+\medskip
+\textit{(b) Normwise backward errors and relative difference of the two solutions}\\[2pt]
+\begin{tabular}{p{0.30\textwidth}c ccc}
+\toprule
+grid family ($N=256$) & ends & FDM & B--S & difference\\
+\midrule
+alternating, ratio 10 & values & $4{\times}10^{-16}$ & $6{\times}10^{-16}$ & $4{\times}10^{-12}$\\
+alternating, ratio 10 & slope & $1{\times}10^{-15}$ & $2{\times}10^{-15}$ & $2{\times}10^{-10}$\\
+alternating, ratio 100 & values & $4{\times}10^{-17}$ & $6{\times}10^{-17}$ & $1{\times}10^{-11}$\\
+alternating, ratio 100 & slope & $1{\times}10^{-15}$ & $2{\times}10^{-15}$ & $1{\times}10^{-9}$\\
+alternating, ratio 1000 & values & $1{\times}10^{-17}$ & $6{\times}10^{-18}$ & $2{\times}10^{-10}$\\
+alternating, ratio 1000 & slope & $4{\times}10^{-15}$ & $2{\times}10^{-15}$ & $3{\times}10^{-8}$\\
+end cells $10^{-6}$ & values & $1{\times}10^{-15}$ & $2{\times}10^{-17}$ & $4{\times}10^{-1}$\\
+end cells $10^{-6}$ & slope & $4{\times}10^{-15}$ & $1{\times}10^{-16}$ & $1{\times}10^{-6}$\\
+geometric, $10^6$ & values & $8{\times}10^{-22}$ & $3{\times}10^{-22}$ & $5{\times}10^{-13}$\\
+geometric, $10^6$ & slope & $6{\times}10^{-17}$ & $7{\times}10^{-17}$ & $4{\times}10^{-8}$\\
+geometric, $10^{12}$ & values & $1{\times}10^{-27}$ & $1{\times}10^{-16}$ & $6{\times}10^{7}$\\
+geometric, $10^{12}$ & slope & $2{\times}10^{-17}$ & $1{\times}10^{-16}$ & $2{\times}10^{10}$\\
+random, unbounded & values & $2{\times}10^{-15}$ & $7{\times}10^{-17}$ & $3{\times}10^{-4}$\\
+random, unbounded & slope & $4{\times}10^{-15}$ & $1{\times}10^{-16}$ & $4{\times}10^{-4}$\\
+cluster of $10^{-4}$ cells & values & $3{\times}10^{-16}$ & $2{\times}10^{-16}$ & $2{\times}10^{-6}$\\
+cluster of $10^{-4}$ cells & slope & $3{\times}10^{-16}$ & $2{\times}10^{-16}$ & $8{\times}10^{-5}$\\
 \bottomrule
 \end{tabular}

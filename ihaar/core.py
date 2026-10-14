@@ -312,6 +312,15 @@ class SafeguardedSylvester:
         except ValueError:
             ex = ey = None; self.kappa = np.inf
         self.use_fdm = self.kappa <= kappa_max
+        if ex is not None:
+            lam = a * ex.lam[:, None] + b * ey.lam[None, :] + g
+            # condition estimate of the Sylvester operator (diagonalizable case):
+            # kappa(Vx) kappa(Vy) max|mu| / min|mu|; large values mean an intrinsically sensitive
+            # problem, which neither FDM nor Bartels--Stewart can make accurate in the forward sense
+            self.cond_est = float(ex.condV * ey.condV * np.abs(lam).max() / np.abs(lam).min())
+        else:
+            self.cond_est = np.inf
+        self.sensitive = self.cond_est * np.finfo(float).eps > 1e-6
         if self.use_fdm:
             self.fdm = TensorFDM([ex, ey])
             self.sym = a * self.fdm.lams[0][:, None] + b * self.fdm.lams[1][None, :] + g

@@ -4,12 +4,12 @@ Repository: https://github.com/mossaiby/iHaar
 
 ## Citing
 If you use this code, please cite the accompanying paper (reference to be added on publication) and the
-archived software release:
+software release:
 
-> F. Mossaiby, *iHaar: integrated-Haar (quadratic-spline) collocation with fast tensor solvers*, version 1.0,
-> https://github.com/mossaiby/iHaar, DOI: *to be added (Zenodo)*.
+> F. Mossaiby, *iHaar: integrated-Haar (quadratic-spline) collocation with fast tensor solvers*, version 1.1,
+> https://github.com/mossaiby/iHaar, GitHub release v1.1.
 
-GitHub's "Cite this repository" button uses `CITATION.cff`. The version used for the paper is the tag `v1.0`.
+GitHub's "Cite this repository" button uses `CITATION.cff`. The version used for the paper is the tag `v1.1`.
 
 ```
 git clone https://github.com/mossaiby/iHaar.git
@@ -42,6 +42,11 @@ experiments/run_all.py     every table/figure: E1 verification/cost, E2 elastici
                            and safeguard cost, env (machine/timing metadata), E6 timing
 requirements.txt / requirements-gpu.txt   dependencies (GPU file adds CuPy)
 experiments/make_tables.py LaTeX tables generated from results/*.json
+paper/manuscript_jsc.tex   Journal of Scientific Computing version (Springer svjour3, smallextended):
+                           built by `python paper/tools/make_jsc.py`; supplement by
+                           `python paper/tools/make_supplement_jsc.py`
+paper/submission_jsc/      self-contained JSC submission (tables inlined, figures and svjour3 class
+                           files included): `python paper/tools/make_submission_jsc.py`
 paper/manuscript.tex       full version (theorems + appendix proofs)
 paper/manuscript_lean.tex  lean engineering version (no proofs; uses the supplement)
 paper/supplementary.tex    Supplementary Material (proofs: Part A; tables S1-S15: Part B),
@@ -57,8 +62,9 @@ python experiments/run_all.py            # ~25 min on one core (E8c alone ~8 min
 #   E15: --only E15_init_0.004_384, E15_ref_0.004_384, E15_dt1_0.004_384, E15_dt8_0.004_384, E15_dt32_0.004_384
 # --only E8c_stage0, E8c_stage1, E8c_stage2, then E8c_finalize and E8fig
 python experiments/make_tables.py
-python paper/tools/make_supplement.py
-cd paper && latexmk -pdf manuscript.tex manuscript_lean.tex supplementary.tex   # needs elsarticle.cls
+python paper/tools/make_jsc.py && python paper/tools/make_supplement_jsc.py && python paper/tools/make_submission_jsc.py
+cd paper/submission_jsc && latexmk -pdf manuscript.tex supplementary.tex      # Journal of Scientific Computing
+# other versions (need elsarticle.cls): python paper/tools/make_supplement.py, then latexmk in paper/
 ```
 
 ## GPU runs

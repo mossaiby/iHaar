@@ -1,0 +1,123 @@
+
+\begin{table}[t]\centering\footnotesize
+\caption{Comparison with the closest spline-collocation approaches, to the best of our knowledge.
+``Spectrum'' refers to the one-dimensional collocation operator used by fast diagonalization or matrix
+decomposition.}\label{tab:closest}
+\begin{tabular}{p{0.14\textwidth}p{0.18\textwidth}p{0.13\textwidth}p{0.235\textwidth}p{0.175\textwidth}}
+\toprule
+Method & Trial space and collocation points & Grids & Spectrum & Fast solver\\
+\midrule
+Classical HWCM~\cite{lepik2011solving,oruc2019nonuniform} & integrated Haar ($C^1$ quadratics); midpoints & uniform or a~priori graded & not analysed & none (dense $N^2\times N^2$ solve)\\
+Hermite-cubic OSC~\cite{dyksen1987tensor,sun1999spectral,bialecki1995matrix} & $C^1$ cubics; two Gauss points per cell & partitions as in the cited works & real, distinct eigenvalues established & matrix decomposition; FFT on uniform grids\\
+QSC~\cite{houstis1988quadratic,christara2002fast,christara2006optimal} & $C^1$ quadratics; midpoints (optimal variants perturbed) & uniform; non-uniform analysed for convergence & symmetric, trigonometric eigenvectors on uniform grids & FFT and matrix decomposition on uniform grids\\
+Quadratic IGA collocation~\cite{auricchio2010isogeometric,schillinger2013isogeometric,delorenzis2015isogeometric} & B-splines; Greville or superconvergent points & arbitrary knots; local refinement & not established for collocation; Galerkin pencils symmetric~\cite{sangalli2016isogeometric} & direct or Krylov\\
+This work & $C^1$ quadratics; midpoints & arbitrary graded tensor grids & real, simple, nonpositive on every grid (Theorem~\ref{thm:spectrum}) & fast diagonalization on any tensor grid; DCT/DST on uniform grids\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%==========================================================================
+\section{Midpoint quadratic-spline collocation}\label{sec:method}
+%==========================================================================
+\subsection{Nodal form of Haar wavelet collocation}
+Let $a=t_0<t_1<\dots<t_N=b$, with $N\ge2$, be the grid, with cells $I_k=[t_{k-1},t_k]$ of width $h_k$,
+midpoints $m_k$, and midpoint spacings $d_k=(h_k+h_{k+1})/2$. HWCM expands $u''$ in Haar functions and
+integrates twice. On a given grid, the Haar functions span exactly the functions that are constant on each
+cell, so the Haar coefficients carry the same information as the cell values $c_k=u''|_{I_k}$.
+Integrating twice gives piecewise quadratics with continuous slopes, that is, $C^1$ quadratic splines.
+We use the values $U_k=u(m_k)$ at the cell midpoints, which are the HWCM collocation values, as unknowns.
+
+\begin{theorem}[Three-term identity]\label{thm:identity}
+Let $s$ be a $C^1$ quadratic spline on the grid, with $U_k=s(m_k)$ and $c_k=s''|_{I_k}$. For $2\le k\le N-1$,
+\begin{equation}\label{eq:interior}
+\frac{U_{k+1}-U_k}{d_k}-\frac{U_k-U_{k-1}}{d_{k-1}}
+=\frac{h_{k-1}^2}{8d_{k-1}}c_{k-1}+\Big(h_k-\frac{h_k^2}{8d_{k-1}}-\frac{h_k^2}{8d_k}\Big)c_k+\frac{h_{k+1}^2}{8d_k}c_{k+1}.
+\end{equation}
+At the left end, with $g_0=s(a)$,
+\begin{align}
+\frac{U_2-U_1}{d_1}-\frac{2(U_1-g_0)}{h_1}&=\Big(\frac{3h_1}{4}-\frac{h_1^2}{8d_1}\Big)c_1+\frac{h_2^2}{8d_1}c_2 &&\text{(value prescribed)},\label{eq:dirrow}\\
+\frac{U_2-U_1}{d_1}&=\Big(h_1-\frac{h_1^2}{8d_1}\Big)c_1+\frac{h_2^2}{8d_1}c_2 &&\text{(if } s'(a)=0),\label{eq:neurow}
+\end{align}
+and symmetrically at the right end. In matrix form, $LU+b=Ac$, where $L$ is a tridiagonal difference
+matrix, $A$ a tridiagonal averaging matrix, and $b$ contains the prescribed end values.
+\end{theorem}
+
+\begin{corollary}[Invertibility and solvability]\label{cor:ops}
+For every grid and every combination of end conditions, $A$ has a positive diagonal and positive
+off-diagonal entries, and it is strictly diagonally dominant by columns, hence invertible. With zero-slope ends, the columns of $A$
+sum to the cell widths $h_k$. The collocation problem $s''(m_k)=f(m_k)$, $k=1,\dots,N$, has a
+unique solution if a value is prescribed at one or both ends. If the slope vanishes at both ends, the
+constants form the kernel of $L$, and a solution exists if and only if $\sum_kh_kf(m_k)=0$; it is then
+unique up to an additive constant, which can be fixed, for example, by prescribing $\sum_kh_kU_k$.
+\end{corollary}
+
+The second derivative at the nodes is therefore $c=D_2U+e$, where $D_2=A^{-1}L$ and the vector $e$ collects the boundary terms.
+Instead of the dense integration matrices of classical HWCM, only two tridiagonal matrices need to be
+assembled. Slopes follow in closed form as well, which gives the first-derivative matrix $D_1$ and the
+end slopes needed for traction conditions (Algorithm~1). Proofs of Theorem~\ref{thm:identity} and
+Corollary~\ref{cor:ops} are given in Appendix~\ref{app:proofs}.
+
+\begin{algorithm}[t]\small\hrule\smallskip
+\noindent\textbf{Algorithm 1: one-dimensional operators} (\texttt{ihaar/core.py}, class \texttt{Grid1D}).
+Input: knots $t_0<\dots<t_N$ and the type of each end (value prescribed, or zero slope).
+\step{1} Compute $h_k$, $m_k$ and $d_k$, and assemble the tridiagonal matrices $L$ and $A$ from~\eqref{eq:interior}--\eqref{eq:neurow}.
+\step{2} Factorize $A$ (tridiagonal LU) and form $D_2=A^{-1}L$ and the boundary vectors $e_i=A^{-1}b_i$.
+\step{3} Form the first-derivative matrix $D_1=\mathbf 1r^{\mathsf T}+TD_2$, where $T_{kj}=h_j$ for $j<k$, $T_{kk}=h_k/2$, and $r$ encodes the end slope $\sigma_0=2(U_1-g_0)/h_1-c_1h_1/4$.
+\step{4} Form the end slopes $s'(a)=\sigma_0$ and $s'(b)=\sigma_0+\sum_kh_kc_k$ as row vectors, for traction conditions.
+\smallskip\hrule
+\end{algorithm}
+
+\subsection{Main result: a real, simple and nonpositive spectrum on every grid}
+\begin{theorem}[Spectrum on every grid]\label{thm:spectrum}
+Let $a=t_0<t_1<\dots<t_N=b$, with $N\ge2$, be any strictly increasing knot vector, and let either the
+value or a zero slope be prescribed at each end. Then $D_2=A^{-1}L$ has $N$ real and simple eigenvalues,
+and it is diagonalizable with a real eigenvector matrix $V$. If a value is prescribed at one or both ends,
+all eigenvalues are negative. If the slope vanishes at both ends, exactly one eigenvalue is zero, with the
+constant vector as eigenvector, and all others are negative.
+\end{theorem}
+
+The proof (Appendix~\ref{app:proofs}) uses only three properties of the identity: $A$ is a positive,
+column-diagonally-dominant tridiagonal matrix, $-L$ is a tridiagonal M-matrix, and the columns of $A$ sum
+to the cell widths. These properties make $A$ and $(-L)^{-1}$ totally nonnegative, and their product
+oscillatory in the sense of Gantmacher and Krein~\cite{gantmacher2002oscillation}, whose eigenvalues are
+real, positive and simple. No assumption on the grading, such as a bounded ratio between neighbouring
+cells, is needed. The result extends immediately to tensor-product operators.
+
+\begin{corollary}[Tensor-product operators]\label{cor:tensor}
+On a tensor grid in $d$ dimensions, with end conditions as in Theorem~\ref{thm:spectrum} in each direction,
+every operator $\sum_m\alpha_mD_2^{(m)}+\gamma I$, with $\alpha_m>0$ and $D_2^{(m)}$ acting along direction
+$m$, is diagonalized by $V_1\otimes\dots\otimes V_d$, with the real eigenvalues
+$\sum_m\alpha_m\lambda^{(m)}_{i_m}+\gamma$. It is nonsingular whenever $\gamma<0$, or $\gamma=0$ and a value
+is prescribed at some end in at least one direction.
+\end{corollary}
+
+Theorem~\ref{thm:spectrum} is an algebraic statement: fast diagonalization is well defined on any grid,
+without complex arithmetic or defective matrices. It does not bound the conditioning $\kappa(V)$ of the
+eigenvector matrix, and it says nothing about the conditioning of the discrete problem itself. These
+floating-point questions are examined in Section~\ref{sec:robust}.
+
+\subsection{Uniform grids: cosine transforms, fourth order and mass conservation}
+\begin{proposition}[Uniform grids]\label{thm:fourth}
+On a uniform grid, $D_2=\frac{8}{h^2}\delta^2(8I+\delta^2)^{-1}$, where $\delta^2$ is the three-point second
+difference with end entries $-3$ (prescribed value) or $-1$ (zero slope). It is symmetric and diagonalized
+by the discrete sine (prescribed values) or cosine (zero slope) transform, with eigenvalues in
+$[-8/h^2,0]$. The corrected operator
+\begin{equation}\label{eq:D24}
+D_2^{(4)}=D_2+\tfrac{h^2}{24}D_2^2
+\end{equation}
+has the same eigenvectors, is negative semidefinite, and is fourth-order accurate for smooth solutions
+of zero-flux or periodic problems whose odd normal derivatives vanish at the ends. For general prescribed
+values, the order remains two.
+\end{proposition}
+
+\begin{proposition}[Exact mass conservation]\label{prop:mass}
+With zero slope at both ends, $h^{\mathsf T}D_2=0$ on any grid, where $h=(h_k)$, so the weighted sum
+$\sum_kh_kU_k$ is conserved by evolutions of the form $\dot U=D_2W$. On a uniform grid, this sum equals the
+exact integral of the spline.
+\end{proposition}
+
+Plain HWCM has half the error constant of the three-point difference ($-h^2/24$ against $h^2/12$), so it is
+about twice as accurate on the same grid. The fourth-order correction costs nothing, because in the
+transform domain it only changes the eigenvalues. Proofs of Propositions~\ref{thm:fourth}
+and~\ref{prop:mass} are given in the Supplementary Material.
+

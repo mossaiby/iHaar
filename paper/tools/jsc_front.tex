@@ -1,0 +1,94 @@
+\RequirePackage{fix-cm}
+\documentclass[smallextended,envcountsame]{svjour3}
+\smartqed
+\usepackage{amsmath,amssymb}
+\usepackage{stix}
+\usepackage{graphicx,booktabs,array,float,xcolor}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+\setlength{\emergencystretch}{2.5em}
+\setlength{\tabcolsep}{4pt}
+\newfloat{algorithm}{tbp}{loa}
+\floatname{algorithm}{Algorithm}
+\newcommand{\todo}[1]{\textcolor{red}{\textbf{[TODO: #1]}}}
+\newcommand{\step}[1]{\par\noindent\hangindent=1.5em\hangafter=1\textbf{Step #1.}\ }
+\newcommand{\repo}{\url{https://github.com/mossaiby/iHaar}}
+\journalname{Journal of Scientific Computing}
+
+\begin{document}
+
+\title{Real spectra and fast tensor solvers for midpoint quadratic-spline collocation on graded grids}
+\titlerunning{Real spectra and fast tensor solvers for quadratic-spline collocation}
+
+\author{Farshid Mossaiby \and Arman Shojaei}
+\authorrunning{F. Mossaiby, A. Shojaei}
+
+\institute{F. Mossaiby (corresponding author) \at
+  Department of Civil Engineering, University of Isfahan, Isfahan 81744-73441, Iran\\
+  \email{mossaiby@eng.ui.ac.ir}
+  \and
+  A. Shojaei \at
+  Institute of Material Systems Modeling, Helmholtz-Zentrum Hereon, Max-Planck-Str. 1, Geesthacht 21502, Germany}
+
+\date{Received: date / Accepted: date}
+
+\maketitle
+
+\begin{abstract}
+Fast diagonalization solves separable problems on tensor grids with a few dense matrix products, but it
+requires one-dimensional operators that are diagonalizable with real eigenvalues. Collocation operators
+on graded grids are not symmetric, so this property has to be proved. We prove it for midpoint
+quadratic-spline collocation, which is the nodal form of the Haar wavelet collocation method (HWCM). An
+exact three-term identity writes the second-derivative operator as $A^{-1}L$ with tridiagonal $A$ and $L$.
+Using the theory of oscillation matrices, we show that this operator has real, simple and nonpositive
+eigenvalues on every strictly increasing grid, for any combination of prescribed values and zero slopes
+at the ends. Fast diagonalization is therefore well defined on arbitrary graded tensor grids. We
+distinguish this algebraic guarantee from backward stability, which we observe on random and adversarial
+grids, and from forward accuracy, which is limited by the conditioning of the discrete problem. On
+uniform grids, a correction that keeps the eigenvectors raises the order to four for zero-flux
+conditions. Applications include mass-conserving Allen--Cahn and Cahn--Hilliard schemes with a modified
+energy law, resolving interfaces with about four nodes across the transition layer, and adaptive plane
+elastostatics for compressible materials. In a benchmark against biquadratic finite elements on
+identical grids, the method needed about one quarter of the unknowns.
+\keywords{Spline collocation \and Haar wavelet collocation \and Fast diagonalization \and Oscillation matrices \and Phase-field models \and Adaptive refinement}
+\subclass{65N35 \and 65F15 \and 15B48 \and 65N22 \and 65M70 \and 74S25}
+\end{abstract}
+
+%==========================================================================
+\section{Introduction}\label{sec:intro}
+%==========================================================================
+The Haar wavelet collocation method (HWCM)~\cite{chen1997haar,lepik2005numerical,lepik2011solving,lepik2014book}
+is widely used in applied mechanics for beams, plates, shells and functionally graded
+structures~\cite{majak2015accuracy,majak2015convergence,majak2018higher}. The highest derivative of the
+unknown is expanded in Haar functions, the lower derivatives follow by exact integration, and the
+equation is enforced at cell midpoints. Higher-order variants~\cite{majak2018higher,ratas2021solving} and
+graded grids based on non-uniform Haar functions~\cite{dubeau2004nonuniform,lepik2008nonuniform,oruc2019nonuniform}
+are available. In two dimensions, however, all equations are usually assembled into one dense matrix of
+size $N^2\times N^2$, which becomes impractical beyond about $64\times64$ cells.
+
+In terms of nodal values, HWCM is midpoint quadratic-spline collocation
+(QSC)~\cite{houstis1988quadratic,christara1994quadratic,christara2006optimal}, and it uses the same
+functions as quadratic isogeometric collocation~\cite{auricchio2010isogeometric,schillinger2013isogeometric}.
+On tensor grids, separable problems can be solved by fast diagonalization~\cite{lynch1964direct}, which
+reduces two- and three-dimensional problems to dense matrix products and fast transforms. It requires
+each one-dimensional operator to be diagonalizable with real eigenvalues. For symmetric finite-element
+and isogeometric Galerkin operators this is automatic~\cite{sangalli2016isogeometric}. Collocation
+operators are generally not symmetric, and for them the property has to be proved. For Hermite-cubic
+orthogonal spline collocation at Gauss points it is known~\cite{dyksen1987tensor,sun1999spectral}, and it
+underlies the matrix decomposition algorithms of Bialecki and Fairweather~\cite{bialecki1995matrix,bialecki2011matrix}.
+For QSC, fast solvers exist on uniform grids~\cite{christara2002fast}. To our knowledge, a spectral
+guarantee has not been established for midpoint QSC on arbitrary non-uniform partitions. There, the
+collocation operator is not symmetric and is not symmetrized by quadrature weights, so a different
+argument is needed.
+
+The main result of this paper (Theorem~\ref{thm:spectrum}) provides this guarantee. On every strictly
+increasing grid, and for every combination of prescribed values and zero slopes at the ends, the
+second-derivative operator has real, simple and nonpositive eigenvalues. The proof combines an exact
+three-term identity (Theorem~\ref{thm:identity}) with the theory of oscillation
+matrices~\cite{gantmacher2002oscillation,fallat2011totally}, and it is given in full in
+Appendix~\ref{app:proofs}. We then examine what the result does and does not provide in floating-point
+arithmetic, distinguishing well-definedness, backward stability and forward accuracy
+(Section~\ref{sec:robust}). We also demonstrate its consequences in three settings: verification problems on
+uniform and graded grids, Allen--Cahn and Cahn--Hilliard computations with thin interfaces, and
+elastostatics with traction boundaries and adaptive refinement at corner singularities.
+Table~\ref{tab:closest} compares the method with the closest existing approaches. Secondary proofs and
+additional tables are collected in the Supplementary Material, and the code is available at \repo.

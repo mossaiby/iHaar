@@ -1014,7 +1014,8 @@ def E17():
                 U1 = sv.solve(F); eta_fdm = sv.last_eta
                 A = g.D2 + 0.5 * gsh * np.eye(N); U2 = sla.solve_sylvester(A, A.T, F); eta_bs = sv.backward_error(U2, F)
                 rows.append(dict(family=nm, N=N, bc=bc, hratio=float(np.diff(t).max() / np.diff(t).min()), max_rel_imag=im,
-                                 condV=float(sv.kappa), eta_fdm=float(eta_fdm), eta_bs=float(eta_bs),
+                                 condV=float(sv.kappa), cond_est=float(sv.cond_est), sensitive=bool(sv.sensitive),
+                                 eta_fdm=float(eta_fdm), eta_bs=float(eta_bs),
                                  rel_diff=float(np.linalg.norm(U1 - U2) / np.linalg.norm(U2))))
                 print("E17", rows[-1], flush=True)
     # cost of the fallback

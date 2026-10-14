@@ -1,0 +1,65 @@
+
+\appendix
+%==========================================================================
+\section{Proofs of Theorem~\ref{thm:identity}, Corollary~\ref{cor:ops} and Theorem~\ref{thm:spectrum}}\label{app:proofs}
+%==========================================================================
+\begin{proof}[of Theorem~\ref{thm:identity}]
+Let $\sigma_k=s'(t_k)$. On $I_k$, $s'(x)=\sigma_k+c_k(x-t_k)=\sigma_{k-1}+c_k(x-t_{k-1})$, hence
+$\sigma_k-\sigma_{k-1}=c_kh_k$. Integrating $s'$ from $m_k$ to $m_{k+1}$ across $t_k$ gives
+\begin{align*}
+U_{k+1}-U_k&=\int_{m_k}^{t_k}\!\big(\sigma_k+c_k(x-t_k)\big)dx+\int_{t_k}^{m_{k+1}}\!\big(\sigma_k+c_{k+1}(x-t_k)\big)dx\\
+&=\sigma_kd_k-\frac{c_kh_k^2}{8}+\frac{c_{k+1}h_{k+1}^2}{8}.
+\end{align*}
+Dividing by $d_k$, subtracting the same relation for $k-1$, and using $\sigma_k-\sigma_{k-1}=c_kh_k$
+gives~\eqref{eq:interior}. At the left end, $U_1-g_0=\sigma_0h_1/2+c_1h_1^2/8$, so
+$2(U_1-g_0)/h_1=\sigma_0+c_1h_1/4$; subtracting this from the relation for $(U_2-U_1)/d_1$
+gives~\eqref{eq:dirrow}. If $\sigma_0=0$, then $\sigma_1=c_1h_1$ and~\eqref{eq:neurow} follows. The right
+end is analogous. The expressions for $s'(m_k)$ and for the end slopes used in Algorithm~1 follow from
+$s'=\sigma_0+\int s''$. \qed
+\end{proof}
+
+\begin{proof}[of Corollary~\ref{cor:ops}]
+The off-diagonal entries of column $k$ of $A$ are positive and sum to $h_k^2/(8d_{k-1})+h_k^2/(8d_k)$, so
+the column-dominance margin is $h_k-h_k^2/(4d_{k-1})-h_k^2/(4d_k)>0$, because $d_j>h_k/2$. For an end column
+with a prescribed value the margin is $3h_1/4-h_1^2/(4d_1)>h_1/4$, and for a zero-slope end column it is
+$h_1-h_1^2/(4d_1)>h_1/2$. Summing the entries of column $k$ in~\eqref{eq:interior} and~\eqref{eq:neurow}, the
+terms $h_k^2/(8d_j)$ cancel and the sum is $h_k$; for a prescribed-value end column it is $3h_1/4$. The
+collocation problem reads $LU=Af-b$. The matrix $-L$ is symmetric, irreducible and weakly diagonally
+dominant, with zero row sums in the interior rows. A prescribed value adds $2/h_1$ (or $2/h_N$) to the
+corresponding diagonal entry, which makes $-L$ irreducibly diagonally dominant and hence nonsingular. If
+the slope vanishes at both ends, all row sums of $L$ are zero, so its kernel is spanned by the constant
+vector, and, since $L$ is symmetric, $LU=Af$ is solvable if and only if $\mathbf 1^{\mathsf T}Af=0$. Because
+$\mathbf 1^{\mathsf T}A=h^{\mathsf T}$, this is the condition $\sum_kh_kf(m_k)=0$. \qed
+\end{proof}
+
+\begin{proof}[of Theorem~\ref{thm:spectrum}]
+We use three standard facts~\cite{gantmacher2002oscillation,fallat2011totally}. (F1) A tridiagonal matrix
+with nonnegative entries is totally nonnegative (all minors nonnegative) if and only if all its principal
+minors are nonnegative. (F2) If $B$ is nonsingular and totally nonnegative, then $JB^{-1}J$ is totally
+nonnegative, where $J=\mathrm{diag}((-1)^i)$; products of totally nonnegative matrices are totally
+nonnegative (Cauchy--Binet). (F3) A totally nonnegative matrix is oscillatory if it is nonsingular and its
+entries next to the diagonal are positive; the eigenvalues of an oscillatory matrix are real, positive and
+simple (Gantmacher--Krein).
+
+First let a value be prescribed at one or both ends. Then $-L$ is an irreducible tridiagonal matrix with
+positive diagonal, negative off-diagonal entries, zero row sums in the interior and a positive row sum in at
+least one end row. It is therefore a nonsingular M-matrix, and all its principal minors are positive. The
+matrix $J(-L)J$ has the same principal minors and nonnegative entries, so it is totally nonnegative by (F1).
+By (F2), $(-L)^{-1}=J\,(J(-L)J)^{-1}J$ is totally nonnegative; it is also entrywise positive, as the inverse
+of an irreducible M-matrix. The matrix $A$ has nonnegative entries, and $JAJ$ is a Z-matrix that is strictly
+diagonally dominant by columns (Corollary~\ref{cor:ops}), hence an M-matrix. Its principal minors, which are
+those of $A$, are therefore positive, and $A$ is totally nonnegative by (F1). The product $P=(-L)^{-1}A$ is
+totally nonnegative and nonsingular, and it is entrywise positive, since $(-L)^{-1}$ is entrywise positive
+and $A$ is nonnegative with a positive diagonal. By (F3), $P$ is oscillatory and has $N$ real, positive,
+simple eigenvalues. Since $D_2=A^{-1}L=-P^{-1}$, the eigenvalues of $D_2$ are real, negative and simple.
+
+If the slope vanishes at both ends, $L$ is singular. Let $0<\sigma<8/\max_kh_k^2$, and consider
+$-(L-\sigma A)=-L+\sigma A$. Its off-diagonal entries are $-1/d_k+\sigma h_j^2/(8d_k)<0$, and its columns have
+the positive dominance margin $\sigma h_k$, because the columns of $L$ sum to zero and those of $A$ sum to
+$h_k$ (Corollary~\ref{cor:ops}). It is therefore a nonsingular M-matrix, and the argument above applies to
+$(-L+\sigma A)^{-1}A$. Hence $A^{-1}L-\sigma I$ has real, negative, simple eigenvalues, so the eigenvalues of
+$D_2$ are real, simple and smaller than $\sigma$. Since $\sigma$ can be arbitrarily small, they are
+nonpositive, and the constant vector spans the kernel. Real simple eigenvalues of a real matrix have real
+eigenvectors, so $V$ is real. Corollary~\ref{cor:tensor} follows because the tensor-product operator is a
+sum of commuting Kronecker factors, each diagonalized by its $V_m$. \qed
+\end{proof}

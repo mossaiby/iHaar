@@ -49,7 +49,7 @@ bot = tab("r cc cc", "& \\multicolumn{2}{c}{$D_2$} & \\multicolumn{2}{c}{$D_2^{(
 w("t_poisson", stack(part("(a) Prescribed values, $-\\Delta u=f$, operator $D_2$", top),
                      part("(b) Zero-slope conditions, $(I-\\Delta)u=f$, uniform grid", bot)))
 f = lambda r, k: "--" if k not in r else "%.3f" % r[k]
-w("t_cost", tab("rr ccccc", "$N$ & unknowns & dense & Bartels--Stewart & FDM setup & FDM solve & DCT solve",
+w("t_cost", tab("rr ccccc", "$N$ & unknowns & dense & B--S & FDM setup & FDM & DCT",
                 [f"{r['N']} & {r['dofs']} & {f(r,'dense')} & {f(r,'bartels_stewart')} & {f(r,'fdm_setup')} & {f(r,'fdm_gemm')} & {f(r,'dct')}" for r in E1["cost"]]))
 
 # ---------------------------------------------------------------- E2
@@ -85,7 +85,7 @@ tp = E4["temporal"]
 w("t_ch_time", tab("c cc", "$\\Delta t$ & error & rate",
                    [f"{sci(dt)} & {sci(tp['err'][i])} & {'--' if i==0 else rate(tp['err'][i-1], tp['err'][i], 1/tp['dt'][i-1], 1/dt)}" for i, dt in enumerate(tp["dt"])]))
 E5 = R("E5"); spd = E4["spinodal"]
-w("t_spinodal", tab("p{6.2cm} cc", "quantity & 2D spinodal & 3D spinodal", [
+w("t_spinodal", tab("p{0.46\\textwidth} cc", "quantity & 2D spinodal & 3D spinodal", [
     f"grid & ${spd['N']}^2$ & ${E5['N']}^3$", f"$\\varepsilon$ & {spd['eps']} & {E5['eps']}",
     f"time steps & {spd['steps']}+4500 & {E5['steps']}",
     f"initial mass $M_h^0$ & 0.1 & {E5.get('mass0', 0):.3g}",
@@ -162,7 +162,7 @@ for key in ("N256_o2", "N256_o4", "N512_o2", "N512_o4"):
 rows.append(f"$1024^2$ (reference) & $D_2^{{(4)}}$ & -- & -- & {st['N1024_o4']['time_per_step']*1e3:.0f}")
 w("t_star", tab("ll ccc", "grid & operator & max nodal error & area error & ms per step", rows))
 c = R("E8c")
-w("t_chsharp", tab("p{7.2cm} c", "quantity & value", [
+w("t_chsharp", tab("p{0.52\\textwidth}p{0.38\\textwidth}", "quantity & value", [
     f"grid and $\\varepsilon$ & ${c['N']}^2$, {c['eps']}", f"nodes per $\\sqrt2\\varepsilon$ & {c['nodes_per_w']:.2f}",
     "time steps & " + ", ".join(f"{nn}$\\times${sci(dd,0)}" for dd, nn in c["stages"]),
     f"largest mass deviation & {sci(c['max_mass_dev'])}", f"largest step change of the modified energy & {sci(c['max_dEmod'])}",
@@ -182,13 +182,13 @@ w("t_compare", stack(part("(a) Smooth Cahn--Hilliard, max error against a pseudo
                      part("(b) Allen--Cahn star, $\\varepsilon=0.004$, against the IHWC $D_2^{(4)}$ reference ($1024^2$)", bot)))
 E10 = R("E10"); A = E10["adaptive"]; sel = A[::3] + ([A[-1]] if (len(A) - 1) % 3 else [])
 mb = lambda x: "%.1f" % (x / 1e6)
-top = tab("rr c ccc", "cycle & unknowns & $e_{H^1}$ & setup (s) & solve (s) & memory (MB)",
+top = tab("rr c ccc", "cycle & unknowns & $e_{H^1}$ & setup (s) & solve (s) & MB",
           [f"{r['cycle']} & {r['ihwc_dofs']} & {sci(r['ihwc_e'])} & {r['ihwc_setup']:.2f} & {r['ihwc_t']:.2f} & {mb(r['ihwc_mem'])}" for r in sel])
-bot = tab("rr c cccc", "cycle & unknowns & $e_{H^1}$ & assembly (s) & setup + CG (s) & memory (MB) & direct (s)",
-          [f"{r['cycle']} & {r['q2_dofs']} & {sci(r['q2_e'])} & {r['q2_assembly']:.2f} & {r['q2pcg_setup'] + r['q2pcg_t']:.2f} & {mb(r['q2pcg_mem'])} & "
+bot = tab("r c cccc", "unknowns & $e_{H^1}$ & asm.\\ (s) & CG (s) & MB & direct (s)",
+          [f"{r['q2_dofs']} & {sci(r['q2_e'])} & {r['q2_assembly']:.2f} & {r['q2pcg_setup'] + r['q2pcg_t']:.2f} & {mb(r['q2pcg_mem'])} & "
            + ("%.2f" % r["q2direct_t"] if "q2direct_t" in r else "--") for r in sel])
 w("t_q2", stack(part("(a) IHWC collocation: GMRES with the FDM preconditioner", top),
-                part("(b) $Q_2$ finite elements on the same grids: CG with the FDM preconditioner, and sparse direct solve", bot)))
+                part("(b) $Q_2$ finite elements on the same grids, same cycles (rows) as in (a): CG with the FDM preconditioner, and sparse direct solve", bot)))
 if have("E12"):
     E12 = R("E12")
     w("t_fdmstab", tab("cr r c ccc", "& & & & \\multicolumn{2}{c}{backward error} & solution\\\\\nratio & $N$ & $h_{\\max}/h_{\\min}$ & $\\kappa(V)$ & FDM & B--S & difference",
@@ -205,9 +205,14 @@ if have("E17"):
     lab = {"alternating_10": "alternating, ratio 10", "alternating_100": "alternating, ratio 100", "alternating_1000": "alternating, ratio 1000",
            "tiny_ends_1e-6": "end cells $10^{-6}$", "geometric_1e6": "geometric, $10^6$", "geometric_1e12": "geometric, $10^{12}$",
            "random_unbounded": "random, unbounded", "cluster": "cluster of $10^{-4}$ cells"}
-    rows = [f"{lab[r['family']]} & {'values' if r['bc']=='D' else 'slope'} & {sci(r['hratio'],0)} & {r['condV']:.1f} & {sci(r['eta_fdm'],0)} & {sci(r['eta_bs'],0)} & {sci(r['rel_diff'],0)}"
-            for r in E17["adversarial"] if r["N"] == 256]
-    w("t_adversarial", tab("p{3.3cm}c c c ccc", "& & & & \\multicolumn{2}{c}{backward error} & solution\\\\\ngrid family ($N=256$) & ends & $h_{\\max}/h_{\\min}$ & $\\kappa(V)$ & FDM & B--S & difference", rows))
+    A_ = [r for r in E17["adversarial"] if r["N"] == 256]
+    bc_ = lambda r: "values" if r["bc"] == "D" else "slope"
+    top = tab("p{0.30\\textwidth}c c c c", "grid family ($N=256$) & ends & $h_{\\max}/h_{\\min}$ & $\\kappa(V)$ & $\\kappa_{\\mathrm{Syl}}$",
+              [f"{lab[r['family']]} & {bc_(r)} & {sci(r['hratio'],0)} & {r['condV']:.0f} & {sci(r.get('cond_est', float('nan')),0)}" for r in A_])
+    bot = tab("p{0.30\\textwidth}c ccc", "grid family ($N=256$) & ends & FDM & B--S & difference",
+              [f"{lab[r['family']]} & {bc_(r)} & {sci(r['eta_fdm'],0)} & {sci(r['eta_bs'],0)} & {sci(r['rel_diff'],0)}" for r in A_])
+    w("t_adversarial", stack(part("(a) Grid, eigenvector conditioning and condition estimate of the Sylvester problem", top),
+                             part("(b) Normwise backward errors and relative difference of the two solutions", bot)))
     w("t_fallback", tab("r ccc", "$N$ & FDM with check (s) & Bartels--Stewart (s) & ratio",
                         [f"{c['N']} & {c['fdm_with_check']:.4f} & {c['bartels_stewart']:.4f} & {c['ratio']:.1f}" for c in E17["cost"]]))
 if have("E14"):
@@ -224,15 +229,15 @@ if have("E15"):
 if have("E16"):
     E16 = R("E16")
     nm = lambda k: (k.replace("face_omega_", "face, $\\omega=").replace("pi", "\\pi$") if k.startswith("face") else k.replace("_", " "))
-    top = tab("l c c cc cc", "case & $\\lambda$ & uniform $128^2$ & \\multicolumn{2}{c}{indicator: error, rate} & \\multicolumn{2}{c}{oracle: error, rate}",
-              [f"{nm(k)} & {'--' if v['lam'] is None else '%.3f' % v['lam']} & {sci(v['uniform128']['eH1'])} & {sci(v['indicator']['rows'][-1]['eH1'])} & {v['indicator']['rate']:.2f} & {sci(v['oracle']['rows'][-1]['eH1'])} & {v['oracle']['rate']:.2f}" for k, v in E16.items()])
-    bot = tab("l c c c c", "case & effectivity range $\\eta/e$ & cycles & final unknowns & total time (s)",
-              [f"{nm(k)} & {v['indicator']['eff_min']:.2f}--{v['indicator']['eff_max']:.2f} & {v['indicator']['cycles']} & {v['indicator']['rows'][-1]['dofs']} & {v['indicator']['time']:.1f}" for k, v in E16.items()])
-    w("t_adapt", stack(part("(a) Final relative $H^1$ error and fitted rate (about $6\\times10^4$ unknowns)", top),
-                       part("(b) Indicator effectivity, number of refinement cycles, and total setup and solve time", bot)))
+    top = tab("l c c cc", "case & $\\lambda$ & uniform $128^2$ & indicator rate & oracle rate",
+              [f"{nm(k)} & {'--' if v['lam'] is None else '%.3f' % v['lam']} & {sci(v['uniform128']['eH1'])} & {v['indicator']['rate']:.2f} & {v['oracle']['rate']:.2f}" for k, v in E16.items()])
+    bot = tab("l cc c c", "case & indicator & oracle & effectivity $\\eta/e$ & cycles, time (s)",
+              [f"{nm(k)} & {sci(v['indicator']['rows'][-1]['eH1'])} & {sci(v['oracle']['rows'][-1]['eH1'])} & {v['indicator']['eff_min']:.2f}--{v['indicator']['eff_max']:.2f} & {v['indicator']['cycles']}, {v['indicator']['time']:.1f}" for k, v in E16.items()])
+    w("t_adapt", stack(part("(a) Uniform reference error and fitted rates", top),
+                       part("(b) Final relative $H^1$ error (about $6\\times10^4$ unknowns), effectivity, cycles and total time", bot)))
 if have("environment"):
     env = R("environment")
-    w("t_env", tab("p{3.2cm}p{10.4cm}", "item & value", [
+    w("t_env", tab("p{0.22\\textwidth}p{0.70\\textwidth}", "item & value", [
         f"CPU & {env['cpu']}, {env['logical_cpus']} logical core(s)", f"operating system & {env['os']}",
         f"software & Python {env['python']}, NumPy {env['numpy']}, SciPy {env['scipy']}", f"BLAS/LAPACK & {env['blas']}",
         "threads & one (the virtual machine exposes a single core)",
