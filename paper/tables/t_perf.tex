@@ -1,16 +1,16 @@
-\textit{(a) CPU, one core, double precision (ms per step)}\\[2pt]
+\textit{(a) CPU, double precision (ms per step)}\\[2pt]
 \begin{tabular}{rr r cc}
 \toprule
 $d$ & $N$ & unknowns & GEMM & DCT\\
 \midrule
-2 & 128 & 16384 & 0.74 & 0.53\\
-2 & 256 & 65536 & 4.14 & 2.02\\
-2 & 512 & 262144 & 28.80 & 12.64\\
-2 & 1024 & 1048576 & 182.56 & 55.51\\
-2 & 2048 & 4194304 & -- & 370.38\\
-3 & 32 & 32768 & 1.16 & 1.44\\
-3 & 64 & 262144 & 16.89 & 14.75\\
-3 & 128 & 2097152 & 176.91 & 160.08\\
+2 & 128 & 16384 & 0.77 & 0.34\\
+2 & 256 & 65536 & 2.25 & 1.55\\
+2 & 512 & 262144 & 12.69 & 12.02\\
+2 & 1024 & 1048576 & 146.23 & 103.26\\
+2 & 2048 & 4194304 & -- & 363.06\\
+3 & 32 & 32768 & 0.99 & 1.06\\
+3 & 64 & 262144 & 8.11 & 9.41\\
+3 & 128 & 2097152 & 191.31 & 189.90\\
 \bottomrule
 \end{tabular}
 
@@ -21,13 +21,13 @@ $d$ & $N$ & unknowns & GEMM & DCT\\
 & & \multicolumn{2}{c}{double precision} & \multicolumn{2}{c}{single precision}\\
 $d$ & $N$ & GEMM & DCT & GEMM & DCT\\
 \midrule
-2 & 128 & \textit{pending} & \textit{pending} & \textit{pending} & \textit{pending}\\
-2 & 256 & \textit{pending} & \textit{pending} & \textit{pending} & \textit{pending}\\
-2 & 512 & \textit{pending} & \textit{pending} & \textit{pending} & \textit{pending}\\
-2 & 1024 & \textit{pending} & \textit{pending} & \textit{pending} & \textit{pending}\\
-2 & 2048 & \textit{pending} & \textit{pending} & \textit{pending} & \textit{pending}\\
-3 & 32 & \textit{pending} & \textit{pending} & \textit{pending} & \textit{pending}\\
-3 & 64 & \textit{pending} & \textit{pending} & \textit{pending} & \textit{pending}\\
-3 & 128 & \textit{pending} & \textit{pending} & \textit{pending} & \textit{pending}\\
+2 & 128 & 1.10 & 2.13 & 1.18 & 2.17\\
+2 & 256 & 3.14 & 2.59 & 3.29 & 2.18\\
+2 & 512 & 13.98 & 2.89 & 11.21 & 2.88\\
+2 & 1024 & 75.91 & 10.63 & 76.42 & 10.62\\
+2 & 2048 & 589.88 & 44.33 & 591.10 & 44.18\\
+3 & 32 & 1.46 & 2.93 & 1.80 & 2.94\\
+3 & 64 & 3.35 & 3.66 & 3.42 & 3.63\\
+3 & 128 & 35.14 & 31.91 & 34.97 & 32.05\\
 \bottomrule
 \end{tabular}

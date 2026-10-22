@@ -93,7 +93,7 @@ w("t_spinodal", tab("p{0.46\\textwidth} cc", "quantity & 2D spinodal & 3D spinod
     f"largest step change of the modified energy & {sci(spd['max_dEmod'])} & {sci(E5['max_dEmod'])}",
     f"largest change of $E_h$ between samples & {sci(spd['max_dE'])} & {sci(E5['max_dE'])}",
     f"range of $\\xi=r/\\sqrt{{E_1+C}}$ & {spd['xi_min']:.5f}--{spd['xi_max']:.5f} & --",
-    f"CPU time per step (one core) & {spd['time_per_step']*1e3:.1f} ms & {E5['time_per_step']*1e3:.0f} ms"]))
+    f"CPU time per step & {spd['time_per_step']*1e3:.1f} ms & {E5['time_per_step']*1e3:.0f} ms"]))
 
 # ---------------------------------------------------------------- E6 (performance) + GPU note
 E6 = R("E6_cpu")
@@ -108,7 +108,7 @@ for dim, N in keys:
     g32 = {r["transform"]: r["ms_per_step"] for r in grows if r["dim"] == dim and r["N"] == N and r["dtype"] == "float32"}
     top.append(f"{dim} & {N} & {N**dim} & {fm(c,'gemm',0)} & {fm(c,'dct',0)}")
     bot.append(f"{dim} & {N} & {fm(g64,'gemm',1)} & {fm(g64,'dct',1)} & {fm(g32,'gemm',1)} & {fm(g32,'dct',1)}")
-w("t_perf", stack(part("(a) CPU, one core, double precision (ms per step)", tab("rr r cc", "$d$ & $N$ & unknowns & GEMM & DCT", top)),
+w("t_perf", stack(part("(a) CPU, double precision (ms per step)", tab("rr r cc", "$d$ & $N$ & unknowns & GEMM & DCT", top)),
                   part("(b) GPU (ms per step)", tab("rr cc cc", "& & \\multicolumn{2}{c}{double precision} & \\multicolumn{2}{c}{single precision}\\\\\n$d$ & $N$ & GEMM & DCT & GEMM & DCT", bot))))
 if gpu:
     note = (f"GPU timings were measured on an {gpu['info']['gpu']} (CUDA {gpu['info']['cuda']}, CuPy {gpu['info']['cupy']}); "
@@ -168,7 +168,7 @@ w("t_chsharp", tab("p{0.52\\textwidth}p{0.38\\textwidth}", "quantity & value", [
     f"largest mass deviation & {sci(c['max_mass_dev'])}", f"largest step change of the modified energy & {sci(c['max_dEmod'])}",
     f"largest change of $E_h$ between samples & {sci(c['max_dE'])}",
     f"largest $|\\nabla u_h|$ / planar-interface value $1/(\\sqrt2\\varepsilon)$ & {c['gradmax']:.0f} / {c['grad_theory']:.0f}",
-    f"largest $|u_h|$ & {c.get('umax', float('nan')):.3f}", f"CPU time per step (one core) & {c['time_per_step']*1e3:.0f} ms"]))
+    f"largest $|u_h|$ & {c.get('umax', float('nan')):.3f}", f"CPU time per step & {c['time_per_step']*1e3:.0f} ms"]))
 w("t_sav_stab", tab("cc cccc", "$S$ & $\\Delta t$ & $\\max|u_h|$ & $E_h$ (start $\\to$ end) & $\\xi$ & max $\\Delta\\tilde E$",
                     [f"{r['S']:g} & {sci(r['dt'],0)} & {r['umax']:.2f} & {r['E0']:.3f} $\\to$ {r['E']:.3f} & {r['xi']:.5f} & {sci(r['max_dEmod'])}" for r in R("E8d")]))
 
@@ -235,21 +235,57 @@ if have("E16"):
               [f"{nm(k)} & {sci(v['indicator']['rows'][-1]['eH1'])} & {sci(v['oracle']['rows'][-1]['eH1'])} & {v['indicator']['eff_min']:.2f}--{v['indicator']['eff_max']:.2f} & {v['indicator']['cycles']}, {v['indicator']['time']:.1f}" for k, v in E16.items()])
     w("t_adapt", stack(part("(a) Uniform reference error and fitted rates", top),
                        part("(b) Final relative $H^1$ error (about $6\\times10^4$ unknowns), effectivity, cycles and total time", bot)))
-if have("environment"):
+import time as _time
+def cpu_label(raw):
+    """Readable label for raw CPUID strings reported by Windows (e.g. 'AMD64 Family 25 Model 80 ...')."""
+    import re as _re
+    mm = _re.match(r"AMD64 Family (\d+) Model (\d+)", raw)
+    if mm and mm.group(1) == "25" and mm.group(2) == "80":
+        return "AMD Zen 3 laptop processor (Ryzen 5000 mobile series; CPUID family 25, model 80)"
+    return raw
+_env_stale = have("environment") and have("E6_cpu") and os.path.getmtime("results/environment.json") + 3600 < os.path.getmtime("results/E6_cpu.json")
+if not have("environment") or _env_stale:
+    w("t_env", tab("p{0.22\\textwidth}p{0.70\\textwidth}", "item & value",
+        ["CPU, OS, software & \\todo{run \\texttt{python experiments/run\\_all.py --only env} on the machine that produced the timings, then rerun \\texttt{make\\_tables.py}}"]))
+else:
     env = R("environment")
     w("t_env", tab("p{0.22\\textwidth}p{0.70\\textwidth}", "item & value", [
-        f"CPU & {env['cpu']}, {env['logical_cpus']} logical core(s)", f"operating system & {env['os']}",
+        f"CPU & {env.get('cpu_name') or cpu_label(env['cpu'])}", f"operating system & {env['os']}",
         f"software & Python {env['python']}, NumPy {env['numpy']}, SciPy {env['scipy']}", f"BLAS/LAPACK & {env['blas']}",
-        "threads & one (the virtual machine exposes a single core)",
+        f"threads & {env['logical_cpus']} logical CPUs; BLAS threading: {env['threads']}",
+        *([f"memory & {env['ram']}"] if env.get("ram") else []),
+        *([f"GPU (Table~\\ref{{tab:perf}}) & {env['gpu']}"] if env.get("gpu") else []),
         "timing protocol & wall-clock time (\\texttt{time.perf\\_counter}); solve times are medians of 3 to 5 repetitions; setup and assembly are reported separately and are not amortized"]))
 print("revision-3 tables written")
 
 # ---------------- AMG note (E13 requires pyamg) ------------------------
+def fmt_n(n):
+    return f"{n:,}".replace(",", "\\,")
+
+
+def amg_sentence(rows, E10rows):
+    fdm_its = [r["q2pcg_its"] for r in E10rows if "q2pcg_its" in r]
+    parts = []
+    for cname, label in (("default", "with the default pyamg settings"), ("evolution", "with an evolution strength measure designed for anisotropy")):
+        R_ = [r for r in rows if r.get("config", "default") == cname]
+        if not R_: continue
+        conv = [r for r in R_ if r.get("converged", r["amg_its"] < 2000)]
+        bad = [r for r in R_ if not r.get("converged", r["amg_its"] < 2000)]
+        s = (f"{label}, the number of CG iterations grew from {min(r['amg_its'] for r in conv if r['amg_its'] > 1) if conv else '--'} to "
+             f"{max(r['amg_its'] for r in conv) if conv else '--'} as refinement stretched the cells")
+        if bad:
+            s += f", and CG did not converge within 2000 iterations from {fmt_n(bad[0]['q2_dofs'])} unknowns onwards"
+        else:
+            s += f", and CG converged on all grids up to {fmt_n(R_[-1]['q2_dofs'])} unknowns"
+        parts.append(s)
+    txt = ("We also preconditioned $Q_2$ with smoothed-aggregation algebraic multigrid (pyamg) using rigid-body near-nullspace modes. "
+           + ("; ".join(parts))[0].upper() + ("; ".join(parts))[1:] + ". "
+           + f"On the same grids, the fast-diagonalization preconditioner needed {min(fdm_its)} to {max(fdm_its)} CG iterations. "
+           + "These AMG settings were not tuned for the extreme anisotropy of adaptively refined tensor grids, and better-suited AMG "
+           + "variants may close the gap; the complete data are in \\url{results/E13.json}.")
+    return txt
 if have("E13"):
-    A13 = R("E13"); r = A13[-1]
-    amg = (f"With smoothed-aggregation algebraic multigrid (pyamg) as preconditioner for $Q_2$ on the same grids, "
-           f"the finest run ({r['q2_dofs']} unknowns) takes {r['amg_setup']:.2f}~s setup and {r['amg_solve']:.2f}~s solve "
-           f"with {r['amg_its']} CG iterations; the complete sequence is in \\url{{results/E13.json}}.")
+    amg = amg_sentence(R("E13"), R("E10")["adaptive"])
 else:
     amg = "\\todo{AMG baseline pending: \\texttt{pip install pyamg}, then run E13 (see README).}"
 open(os.path.join(T, "amg_note.tex"), "w").write(amg + "\n")

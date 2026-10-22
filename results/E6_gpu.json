@@ -1,0 +1,297 @@
+{
+ "info": {
+  "gpu": "NVIDIA GeForce RTX 3050 Ti Laptop GPU",
+  "cuda": "13.2",
+  "cupy": "14.2.0"
+ },
+ "rows": [
+  {
+   "dim": 2,
+   "N": 128,
+   "dofs": 16384,
+   "transform": "gemm",
+   "dtype": "float64",
+   "ms_per_step": 1.101665000896901,
+   "mdofs_per_s": 14.87203459006255
+  },
+  {
+   "dim": 2,
+   "N": 128,
+   "dofs": 16384,
+   "transform": "gemm",
+   "dtype": "float32",
+   "ms_per_step": 1.1795250000432134,
+   "mdofs_per_s": 13.89033721150442
+  },
+  {
+   "dim": 2,
+   "N": 128,
+   "dofs": 16384,
+   "transform": "dct",
+   "dtype": "float64",
+   "ms_per_step": 2.1256099978927523,
+   "mdofs_per_s": 7.707905032551815
+  },
+  {
+   "dim": 2,
+   "N": 128,
+   "dofs": 16384,
+   "transform": "dct",
+   "dtype": "float32",
+   "ms_per_step": 2.1743649966083467,
+   "mdofs_per_s": 7.535073469981514
+  },
+  {
+   "dim": 2,
+   "N": 256,
+   "dofs": 65536,
+   "transform": "gemm",
+   "dtype": "float64",
+   "ms_per_step": 3.139434999320656,
+   "mdofs_per_s": 20.875093771389235
+  },
+  {
+   "dim": 2,
+   "N": 256,
+   "dofs": 65536,
+   "transform": "gemm",
+   "dtype": "float32",
+   "ms_per_step": 3.2890349975787103,
+   "mdofs_per_s": 19.925601292855095
+  },
+  {
+   "dim": 2,
+   "N": 256,
+   "dofs": 65536,
+   "transform": "dct",
+   "dtype": "float64",
+   "ms_per_step": 2.585325000109151,
+   "mdofs_per_s": 25.34923075328367
+  },
+  {
+   "dim": 2,
+   "N": 256,
+   "dofs": 65536,
+   "transform": "dct",
+   "dtype": "float32",
+   "ms_per_step": 2.181745000416413,
+   "mdofs_per_s": 30.038340863616803
+  },
+  {
+   "dim": 2,
+   "N": 512,
+   "dofs": 262144,
+   "transform": "gemm",
+   "dtype": "float64",
+   "ms_per_step": 13.975139998365194,
+   "mdofs_per_s": 18.757880066365384
+  },
+  {
+   "dim": 2,
+   "N": 512,
+   "dofs": 262144,
+   "transform": "gemm",
+   "dtype": "float32",
+   "ms_per_step": 11.205704999156296,
+   "mdofs_per_s": 23.393798071583845
+  },
+  {
+   "dim": 2,
+   "N": 512,
+   "dofs": 262144,
+   "transform": "dct",
+   "dtype": "float64",
+   "ms_per_step": 2.8938099974766374,
+   "mdofs_per_s": 90.5878410222461
+  },
+  {
+   "dim": 2,
+   "N": 512,
+   "dofs": 262144,
+   "transform": "dct",
+   "dtype": "float32",
+   "ms_per_step": 2.884735004045069,
+   "mdofs_per_s": 90.87281834636913
+  },
+  {
+   "dim": 2,
+   "N": 1024,
+   "dofs": 1048576,
+   "transform": "gemm",
+   "dtype": "float64",
+   "ms_per_step": 75.91152000240982,
+   "mdofs_per_s": 13.813134027176808
+  },
+  {
+   "dim": 2,
+   "N": 1024,
+   "dofs": 1048576,
+   "transform": "gemm",
+   "dtype": "float32",
+   "ms_per_step": 76.42060000216588,
+   "mdofs_per_s": 13.721117080607605
+  },
+  {
+   "dim": 2,
+   "N": 1024,
+   "dofs": 1048576,
+   "transform": "dct",
+   "dtype": "float64",
+   "ms_per_step": 10.627205000491813,
+   "mdofs_per_s": 98.66902915220638
+  },
+  {
+   "dim": 2,
+   "N": 1024,
+   "dofs": 1048576,
+   "transform": "dct",
+   "dtype": "float32",
+   "ms_per_step": 10.622749995673075,
+   "mdofs_per_s": 98.71040930334541
+  },
+  {
+   "dim": 2,
+   "N": 2048,
+   "dofs": 4194304,
+   "transform": "gemm",
+   "dtype": "float64",
+   "ms_per_step": 589.8777400143445,
+   "mdofs_per_s": 7.1104632629432745
+  },
+  {
+   "dim": 2,
+   "N": 2048,
+   "dofs": 4194304,
+   "transform": "gemm",
+   "dtype": "float32",
+   "ms_per_step": 591.0991000011563,
+   "mdofs_per_s": 7.0957712505260035
+  },
+  {
+   "dim": 2,
+   "N": 2048,
+   "dofs": 4194304,
+   "transform": "dct",
+   "dtype": "float64",
+   "ms_per_step": 44.32586000766605,
+   "mdofs_per_s": 94.62431184131803
+  },
+  {
+   "dim": 2,
+   "N": 2048,
+   "dofs": 4194304,
+   "transform": "dct",
+   "dtype": "float32",
+   "ms_per_step": 44.17538000270724,
+   "mdofs_per_s": 94.9466422188775
+  },
+  {
+   "dim": 3,
+   "N": 32,
+   "dofs": 32768,
+   "transform": "gemm",
+   "dtype": "float64",
+   "ms_per_step": 1.4600050053559244,
+   "mdofs_per_s": 22.443758671917514
+  },
+  {
+   "dim": 3,
+   "N": 32,
+   "dofs": 32768,
+   "transform": "gemm",
+   "dtype": "float32",
+   "ms_per_step": 1.7975850030779839,
+   "mdofs_per_s": 18.2289015228163
+  },
+  {
+   "dim": 3,
+   "N": 32,
+   "dofs": 32768,
+   "transform": "dct",
+   "dtype": "float64",
+   "ms_per_step": 2.929954999126494,
+   "mdofs_per_s": 11.18378951545983
+  },
+  {
+   "dim": 3,
+   "N": 32,
+   "dofs": 32768,
+   "transform": "dct",
+   "dtype": "float32",
+   "ms_per_step": 2.9355050006415695,
+   "mdofs_per_s": 11.162644925775426
+  },
+  {
+   "dim": 3,
+   "N": 64,
+   "dofs": 262144,
+   "transform": "gemm",
+   "dtype": "float64",
+   "ms_per_step": 3.3504399994853884,
+   "mdofs_per_s": 78.24166379349101
+  },
+  {
+   "dim": 3,
+   "N": 64,
+   "dofs": 262144,
+   "transform": "gemm",
+   "dtype": "float32",
+   "ms_per_step": 3.419559996109456,
+   "mdofs_per_s": 76.66015519489342
+  },
+  {
+   "dim": 3,
+   "N": 64,
+   "dofs": 262144,
+   "transform": "dct",
+   "dtype": "float64",
+   "ms_per_step": 3.655560000333935,
+   "mdofs_per_s": 71.71103742683835
+  },
+  {
+   "dim": 3,
+   "N": 64,
+   "dofs": 262144,
+   "transform": "dct",
+   "dtype": "float32",
+   "ms_per_step": 3.6330649978481233,
+   "mdofs_per_s": 72.15505369578271
+  },
+  {
+   "dim": 3,
+   "N": 128,
+   "dofs": 2097152,
+   "transform": "gemm",
+   "dtype": "float64",
+   "ms_per_step": 35.1431000046432,
+   "mdofs_per_s": 59.67464451692989
+  },
+  {
+   "dim": 3,
+   "N": 128,
+   "dofs": 2097152,
+   "transform": "gemm",
+   "dtype": "float32",
+   "ms_per_step": 34.970320016145706,
+   "mdofs_per_s": 59.96948266506427
+  },
+  {
+   "dim": 3,
+   "N": 128,
+   "dofs": 2097152,
+   "transform": "dct",
+   "dtype": "float64",
+   "ms_per_step": 31.909699994139373,
+   "mdofs_per_s": 65.72145775062658
+  },
+  {
+   "dim": 3,
+   "N": 128,
+   "dofs": 2097152,
+   "transform": "dct",
+   "dtype": "float32",
+   "ms_per_step": 32.05063999630511,
+   "mdofs_per_s": 65.4324531504446
+  }
+ ]
+}

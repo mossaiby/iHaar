@@ -1,11 +1,14 @@
 {
- "cpu": "Intel(R) Xeon(R) Processor @ 2.80GHz",
- "os": "Linux 6.18.44-fc-v114",
- "python": "3.12.3",
- "numpy": "2.4.4",
+ "cpu": "AMD64 Family 25 Model 80 Stepping 0, AuthenticAMD",
+ "os": "Windows 10",
+ "python": "3.11.9",
+ "numpy": "2.4.6",
  "scipy": "1.17.1",
  "blas": "scipy-openblas 0.3.31.188.0",
  "threads": "default",
- "logical_cpus": 1,
- "timing": "wall-clock time.perf_counter(); median of repeated runs where stated; setup reported separately"
+ "logical_cpus": 16,
+ "timing": "wall-clock time.perf_counter(); median of repeated runs where stated; setup reported separately",
+ "cpu_name": "AMD Ryzen 7 5800U (8 cores, 16 threads, 1.90 GHz base clock)",
+ "ram": "16 GB",
+ "gpu": "NVIDIA GeForce RTX 3050 Ti Laptop GPU (4 GB)"
 }

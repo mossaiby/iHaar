@@ -21,7 +21,10 @@ venv/
 *.synctex.gz
 *.toc
 *.spl
-paper/manuscript.pdf
+paper/*.pdf
+# compiled submission (the figure PDFs in this folder ARE needed and stay tracked)
+paper/submission_jsc/manuscript.pdf
+paper/submission_jsc/supplementary.pdf
 
 # Figure previews (PDF figures are tracked)
 figures/*.png

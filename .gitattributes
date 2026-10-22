@@ -1,0 +1,5 @@
+# Normalize line endings in the repository (Windows checkouts keep CRLF locally)
+* text=auto
+*.pdf binary
+*.npy binary
+*.png binary

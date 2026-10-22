@@ -5,8 +5,8 @@
   "dofs": 16384,
   "transform": "gemm",
   "dtype": "float64",
-  "ms_per_step": 0.7386425999982293,
-  "mdofs_per_s": 22.181228106853403
+  "ms_per_step": 0.772435002727434,
+  "mdofs_per_s": 21.21084614517573
  },
  {
   "dim": 2,
@@ -14,8 +14,8 @@
   "dofs": 16384,
   "transform": "dct",
   "dtype": "float64",
-  "ms_per_step": 0.5295133999993595,
-  "mdofs_per_s": 30.941615453017466
+  "ms_per_step": 0.34431999665685,
+  "mdofs_per_s": 47.58364358468651
  },
  {
   "dim": 2,
@@ -23,8 +23,8 @@
   "dofs": 65536,
   "transform": "gemm",
   "dtype": "float64",
-  "ms_per_step": 4.142695049995382,
-  "mdofs_per_s": 15.81965344035474
+  "ms_per_step": 2.245829999446869,
+  "mdofs_per_s": 29.18119359708483
  },
  {
   "dim": 2,
@@ -32,8 +32,8 @@
   "dofs": 65536,
   "transform": "dct",
   "dtype": "float64",
-  "ms_per_step": 2.0214213000031123,
-  "mdofs_per_s": 32.42075266541374
+  "ms_per_step": 1.5459199959877878,
+  "mdofs_per_s": 42.39287943107614
  },
  {
   "dim": 2,
@@ -41,8 +41,8 @@
   "dofs": 262144,
   "transform": "gemm",
   "dtype": "float64",
-  "ms_per_step": 28.803069349999078,
-  "mdofs_per_s": 9.101252259423122
+  "ms_per_step": 12.692869995953515,
+  "mdofs_per_s": 20.652854719505633
  },
  {
   "dim": 2,
@@ -50,8 +50,8 @@
   "dofs": 262144,
   "transform": "dct",
   "dtype": "float64",
-  "ms_per_step": 12.63932389999809,
-  "mdofs_per_s": 20.740349885332048
+  "ms_per_step": 12.02218999969773,
+  "mdofs_per_s": 21.805012232096733
  },
  {
   "dim": 2,
@@ -59,8 +59,8 @@
   "dofs": 1048576,
   "transform": "gemm",
   "dtype": "float64",
-  "ms_per_step": 182.5616569499971,
-  "mdofs_per_s": 5.743681436278817
+  "ms_per_step": 146.22910000034608,
+  "mdofs_per_s": 7.170775174007898
  },
  {
   "dim": 2,
@@ -68,8 +68,8 @@
   "dofs": 1048576,
   "transform": "dct",
   "dtype": "float64",
-  "ms_per_step": 55.51000495000267,
-  "mdofs_per_s": 18.889855998831965
+  "ms_per_step": 103.25926999794319,
+  "mdofs_per_s": 10.15478804005574
  },
  {
   "dim": 2,
@@ -77,8 +77,8 @@
   "dofs": 4194304,
   "transform": "dct",
   "dtype": "float64",
-  "ms_per_step": 370.3797506000001,
-  "mdofs_per_s": 11.324333992896207
+  "ms_per_step": 363.0610200110823,
+  "mdofs_per_s": 11.552614488528596
  },
  {
   "dim": 3,
@@ -86,8 +86,8 @@
   "dofs": 32768,
   "transform": "gemm",
   "dtype": "float64",
-  "ms_per_step": 1.1597148000021207,
-  "mdofs_per_s": 28.255222749541595
+  "ms_per_step": 0.9936699992977084,
+  "mdofs_per_s": 32.97674280511568
  },
  {
   "dim": 3,
@@ -95,8 +95,8 @@
   "dofs": 32768,
   "transform": "dct",
   "dtype": "float64",
-  "ms_per_step": 1.438928249996252,
-  "mdofs_per_s": 22.772504466491192
+  "ms_per_step": 1.064915000461042,
+  "mdofs_per_s": 30.770530968024204
  },
  {
   "dim": 3,
@@ -104,8 +104,8 @@
   "dofs": 262144,
   "transform": "gemm",
   "dtype": "float64",
-  "ms_per_step": 16.885067300000856,
-  "mdofs_per_s": 15.52519722559748
+  "ms_per_step": 8.108164998702705,
+  "mdofs_per_s": 32.330866483593105
  },
  {
   "dim": 3,
@@ -113,8 +113,8 @@
   "dofs": 262144,
   "transform": "dct",
   "dtype": "float64",
-  "ms_per_step": 14.753538299999036,
-  "mdofs_per_s": 17.768212253193333
+  "ms_per_step": 9.406599996145815,
+  "mdofs_per_s": 27.86809262724138
  },
  {
   "dim": 3,
@@ -122,8 +122,8 @@
   "dofs": 2097152,
   "transform": "gemm",
   "dtype": "float64",
-  "ms_per_step": 176.9085185999984,
-  "mdofs_per_s": 11.85444328286868
+  "ms_per_step": 191.3140800083056,
+  "mdofs_per_s": 10.961827795993663
  },
  {
   "dim": 3,
@@ -131,7 +131,7 @@
   "dofs": 2097152,
   "transform": "dct",
   "dtype": "float64",
-  "ms_per_step": 160.08426620001046,
-  "mdofs_per_s": 13.100300546587151
+  "ms_per_step": 189.9029799969867,
+  "mdofs_per_s": 11.043281153530486
  }
 ]

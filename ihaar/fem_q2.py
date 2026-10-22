@@ -62,7 +62,7 @@ class Q2Mesh1D:
 
 
 def solve_q2(tx, ty, field, E=1.0, nu=0.3, dirichlet=("L", "R", "B", "T"), solver="direct",
-             tol=1e-10, return_info=False):
+             tol=1e-10, return_info=False, amg_options=None, maxiter=2000):
     """Solve the plane-strain problem with exact Dirichlet data on the listed edges
     (other edges traction free). Returns (relative H1 error, dofs, solve time).
 
@@ -109,14 +109,17 @@ def solve_q2(tx, ty, field, E=1.0, nu=0.3, dirichlet=("L", "R", "B", "T"), solve
         Bm[:n, 2] = -YN.ravel(); Bm[n:, 2] = XN.ravel()
         Bm = Bm[free]
         t0 = time.perf_counter()
-        ml = pyamg.smoothed_aggregation_solver(Kff, B=Bm, strength="symmetric", max_coarse=500)
+        opts = dict(strength="symmetric", max_coarse=500)
+        opts.update(amg_options or {})
+        ml = pyamg.smoothed_aggregation_solver(Kff, B=Bm, **opts)
         info["setup"] = time.perf_counter() - t0
         info["mem"] += sum(l.A.data.nbytes + l.A.indices.nbytes for l in ml.levels)
         res = []
         t0 = time.perf_counter()
-        sol = ml.solve(rhs, tol=tol, accel="cg", residuals=res, maxiter=2000)
+        sol = ml.solve(rhs, tol=tol, accel="cg", residuals=res, maxiter=maxiter)
         tsolve = time.perf_counter() - t0
         info["its"] = len(res) - 1
+        info["converged"] = bool(info["its"] < maxiter)
     else:
         # free node sets are tensor products of 1D free sets
         fx = np.ones(nx, bool); fy = np.ones(ny, bool)

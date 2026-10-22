@@ -41,7 +41,7 @@ head = r"""\documentclass[11pt]{article}
 \newtheorem*{proposition5}{Proposition 5}\newtheorem*{proposition6}{Proposition 6}\newtheorem*{theorem7}{Theorem 7}
 \renewcommand{\thetable}{S\arabic{table}}\renewcommand{\thefigure}{S\arabic{figure}}
 \title{Supplementary Material for\\ ``Real spectra and fast tensor solvers for midpoint quadratic-spline collocation on graded grids''}
-\author{Farshid Mossaiby and Arman Shojaei}
+\author{Farshid Mossaiby}
 \date{}
 \begin{document}
 \maketitle

@@ -819,12 +819,26 @@ def environment():
         cpu = [l.split(":", 1)[1].strip() for l in open("/proc/cpuinfo") if l.startswith("model name")][0]
     except Exception:
         cpu = platform.processor()
+    if platform.system() == "Windows":
+        try:
+            import winreg
+            k = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DESCRIPTION\System\CentralProcessor\0")
+            cpu = winreg.QueryValueEx(k, "ProcessorNameString")[0].strip()
+        except Exception:
+            pass
     blas = "unknown"
     try:
         cfg = np.show_config(mode="dicts")["Build Dependencies"]["blas"]; blas = f"{cfg.get('name')} {cfg.get('version')}"
     except Exception:
         pass
-    env = dict(cpu=cpu, os=f"{platform.system()} {platform.release()}", python=platform.python_version(),
+    osname = f"{platform.system()} {platform.release()}"
+    if platform.system() == "Windows":
+        try:   # Python < 3.12 reports Windows 11 as release "10"; build >= 22000 is Windows 11
+            build = int(platform.version().split(".")[-1])
+            osname = f"Windows {'11' if build >= 22000 else '10'} (build {build})"
+        except Exception:
+            pass
+    env = dict(cpu=cpu, cpu_name=cpu, os=osname, python=platform.python_version(),
                numpy=np.__version__, scipy=__import__("scipy").__version__, blas=blas,
                threads=os.environ.get("OMP_NUM_THREADS", "default"), logical_cpus=os.cpu_count(),
                timing="wall-clock time.perf_counter(); median of repeated runs where stated; setup reported separately")
@@ -842,22 +856,38 @@ def med_time(fn, reps=3):
 # E13: Q2 FEM with algebraic multigrid (requires pyamg; run where available)
 # ---------------------------------------------------------------------------
 def E13():
-    """Q2 FEM with CG preconditioned by smoothed-aggregation AMG (pyamg) on the IHWC-adapted
-    grids of E10. Writes results/E13.json; skipped if pyamg is not installed."""
+    """Q2 FEM with CG preconditioned by smoothed-aggregation AMG (pyamg) on the IHWC-adapted grids of E10,
+    for two AMG configurations: pyamg defaults (symmetric strength) and an anisotropy-oriented setup
+    (evolution strength of connection). Records iterations and whether CG converged within 2000 iterations.
+    Skipped if pyamg is not installed."""
     try:
         import pyamg  # noqa: F401
     except ImportError:
         print("E13 skipped: pip install pyamg"); return
     from ihaar.fem_q2 import solve_q2
+    configs = {"default": {},
+               "evolution": {"strength": ("evolution", {"epsilon": 4.0, "k": 2, "proj_type": "D_A"})}}
     fld = WilliamsField(apex=(0.0, 1.0)); bc = {"T": "T"}; rows = []
-    tx = ty = np.linspace(0, 1, 9)
+    grids = []; tx = ty = np.linspace(0, 1, 9)
     for cyc in range(200):
-        el = ElasticityMixed(tx, ty, bc); Ue, Ve, its, _ = el.solve(fld)
-        e, d, t, inf = solve_q2(tx, ty, fld, dirichlet=("L", "R", "B"), solver="amg", return_info=True)
-        rows.append(dict(cycle=cyc, q2_dofs=d, q2_e=e, amg_setup=inf["setup"], amg_solve=t, amg_its=inf["its"], amg_mem=inf["mem"]))
-        print("E13", rows[-1], flush=True)
-        if d > 6e5: break
+        el = ElasticityMixed(tx, ty, bc); Ue, Ve, its, _ = el.solve(fld); grids.append((tx, ty))
+        if 2 * (2 * len(tx) - 1) * (2 * len(ty) - 1) > 9e5: break
         etx, ety = el.indicators(Ue, Ve); mx, my = dorfler(etx, ety, 0.6); tx = bisect(tx, mx); ty = bisect(ty, my)
+    for cname, opts in configs.items():
+        stop = False
+        for cyc, (tx, ty) in enumerate(grids):
+            if stop: break
+            try:
+                e, d, t, inf = solve_q2(tx, ty, fld, dirichlet=("L", "R", "B"), solver="amg", return_info=True, amg_options=opts)
+            except Exception as exc:          # a configuration not supported by the installed pyamg
+                print("E13", cname, "failed:", exc); break
+            hr = float(max(np.diff(tx).max() / np.diff(tx).min(), np.diff(ty).max() / np.diff(ty).min()))
+            rows.append(dict(config=cname, cycle=cyc, q2_dofs=d, q2_e=e, amg_setup=inf["setup"], amg_solve=t,
+                             amg_its=inf["its"], converged=inf["converged"], amg_mem=inf["mem"], hratio=hr))
+            print("E13", rows[-1], flush=True)
+            # stop a configuration after two consecutive non-converged solves (they only get slower)
+            if len(rows) >= 2 and not rows[-1]["converged"] and rows[-2]["config"] == cname and not rows[-2]["converged"]:
+                stop = True
     save("E13", rows)
 
 
@@ -1068,7 +1098,7 @@ def E6(gpu=False):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("--only", default="E1,E2,E3,E4,E5,E7,E7b,E8a,E8b,E8c,E8d,E8fig,E9,E10,E11,E12,E14,E15_init_0.004_384,E15_ref_0.004_384,E15_dt1_0.004_384,E15_dt8_0.004_384,E15_dt32_0.004_384,E16,E17,E13,E6")
+    ap.add_argument("--only", default="env,E1,E2,E3,E4,E5,E7,E7b,E8a,E8b,E8c,E8d,E8fig,E9,E10,E11,E12,E14,E15_init_0.004_384,E15_ref_0.004_384,E15_dt1_0.004_384,E15_dt8_0.004_384,E15_dt32_0.004_384,E16,E17,E13,E6")
     ap.add_argument("--gpu", action="store_true")
     a = ap.parse_args()
     for name in a.only.split(","):

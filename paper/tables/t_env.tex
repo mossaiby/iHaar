@@ -2,11 +2,13 @@
 \toprule
 item & value\\
 \midrule
-CPU & Intel(R) Xeon(R) Processor @ 2.80GHz, 1 logical core(s)\\
-operating system & Linux 6.18.44-fc-v114\\
-software & Python 3.12.3, NumPy 2.4.4, SciPy 1.17.1\\
+CPU & AMD Ryzen 7 5800U (8 cores, 16 threads, 1.90 GHz base clock)\\
+operating system & Windows 10\\
+software & Python 3.11.9, NumPy 2.4.6, SciPy 1.17.1\\
 BLAS/LAPACK & scipy-openblas 0.3.31.188.0\\
-threads & one (the virtual machine exposes a single core)\\
+threads & 16 logical CPUs; BLAS threading: default\\
+memory & 16 GB\\
+GPU (Table~\ref{tab:perf}) & NVIDIA GeForce RTX 3050 Ti Laptop GPU (4 GB)\\
 timing protocol & wall-clock time (\texttt{time.perf\_counter}); solve times are medians of 3 to 5 repetitions; setup and assembly are reported separately and are not amortized\\
 \bottomrule
 \end{tabular}
