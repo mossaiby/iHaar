@@ -8,8 +8,8 @@ def flatten(src, dst):
     s = open(src).read()
     s = re.sub(r"\\input\{tables/([A-Za-z_0-9]+)\.tex\}", lambda m: open(f"tables/{m.group(1)}.tex").read().strip(), s)
     for f in re.findall(r"\\includegraphics(?:\[[^\]]*\])?\{\.\./figures/([^}]+)\}", s):
-        shutil.copy(f"../figures/{f}", os.path.join(out, f))
-    s = s.replace("{../figures/", "{")
+        shutil.copy(f"../figures/{f}", os.path.join(out, os.path.basename(f)))
+    s = s.replace("{../figures/panels/", "{").replace("{../figures/", "{")
     open(os.path.join(out, dst), "w").write(s)
 flatten("manuscript_jsc.tex", "manuscript.tex")
 flatten("supplementary_jsc.tex", "supplementary.tex")

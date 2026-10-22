@@ -401,9 +401,13 @@ tensor refinement extends refinement lines across the domain, the grids contain 
 cells than an ideal local refinement would, but this does not affect the convergence rate.
 
 \begin{figure}[t]\centering
-\includegraphics[width=0.8\textwidth]{../figures/elasticity_traction.pdf}
-\caption{Corner singularity at the end of a traction-free face (red edge; the star marks the singular
-point). Left: error versus number of unknowns. Right: grid generated after 12 refinement cycles.}\label{fig:trac}
+\begin{tabular}{@{}cc@{}}
+\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/trac_error.pdf}\\[-1pt]\small (a)\end{tabular} & \begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/trac_grid.pdf}\\[-1pt]\small (b)\end{tabular}\\
+\end{tabular}\par\smallskip
+\begin{tabular}{@{}c@{}}
+\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/trac_cellsize.pdf}\\[-1pt]\small (c)\end{tabular}\\
+\end{tabular}\par\smallskip
+\caption{Corner singularity at the end of a traction-free face ($\nu=0.3$). (a) Relative $H^1$ error versus number of unknowns for uniform and automatic refinement, with the scaled indicator. (b) Grid generated after 12 refinement cycles; the red edge is the traction-free face and the star marks the singular point. (c) Cell size versus distance to the singular point on the grid of (b).}\label{fig:trac}
 \end{figure}
 
 To put these numbers in context, we solved the same problem with biquadratic ($Q_2$) finite elements on
@@ -421,9 +425,10 @@ Memory counts operators, factorizations and Krylov vectors.}\label{tab:q2}
 \input{tables/t_q2.tex}
 \end{table}
 \begin{figure}[t]\centering
-\includegraphics[width=0.9\textwidth]{../figures/ihwc_vs_q2.pdf}
-\caption{Collocation versus $Q_2$ finite elements on identical grids. Left: error versus number of
-unknowns. Right: solve time versus error.}\label{fig:q2}
+\begin{tabular}{@{}cc@{}}
+\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/q2_error.pdf}\\[-1pt]\small (a)\end{tabular} & \begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/q2_time.pdf}\\[-1pt]\small (b)\end{tabular}\\
+\end{tabular}\par\smallskip
+\caption{Collocation (IHWC) versus $Q_2$ finite elements on identical grids. (a) Error versus number of unknowns. (b) Solve time versus error for IHWC and for $Q_2$ with CG and the fast-diagonalization preconditioner, a sparse direct solver, and CG with algebraic multigrid (converged solves only).}\label{fig:q2}
 \end{figure}
 
 \subsection{Phase field: how many nodes does an interface need?}\label{sec:sharp}
@@ -434,7 +439,9 @@ resolution. The fourth-order operator pays off from about 1.5 nodes per $\sqrt2\
 is 25 times more accurate than finite differences, and at 7.2 nodes 110 times.
 
 \begin{figure}[t]\centering
-\includegraphics[width=0.5\textwidth]{../figures/interface_resolution.pdf}
+\begin{tabular}{@{}c@{}}
+\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/resolution.pdf}\end{tabular}\\
+\end{tabular}\par\smallskip
 \caption{Planar interface ($\varepsilon=0.01$): maximum nodal error versus nodes per $\sqrt2\varepsilon$ (data in Table~S5).}\label{fig:res}
 \end{figure}
 
@@ -445,9 +452,13 @@ the reference. $D_2^{(4)}$ on $256^2$ is as accurate in area as $D_2$ on $512^2$
 unknowns, and on $512^2$ it is 16 times more accurate than $D_2$.
 
 \begin{figure}[t]\centering
-\includegraphics[width=\textwidth]{../figures/allen_cahn_star.pdf}
-\caption{Allen--Cahn star, $\varepsilon=0.004$. Left: zero level sets at $t=0$ and $t=120$. Middle: zoom at
-a tip, with the $256^2$ grid nodes. Right: gradient magnitude of the reference solution.}\label{fig:star}
+\begin{tabular}{@{}cc@{}}
+\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/star_levelsets.pdf}\\[-1pt]\small (a)\end{tabular} & \begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/star_zoom.pdf}\\[-1pt]\small (b)\end{tabular}\\
+\end{tabular}\par\smallskip
+\begin{tabular}{@{}c@{}}
+\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/star_gradient.pdf}\\[-1pt]\small (c)\end{tabular}\\
+\end{tabular}\par\smallskip
+\caption{Allen--Cahn star, $\varepsilon=0.004$, at $t=120$. (a) Zero level sets of the reference and of the $256^2$ solutions, and the initial interface. (b) Zoom at a tip, with the $256^2$ grid nodes. (c) Gradient magnitude of the reference solution.}\label{fig:star}
 \end{figure}
 \begin{table}[t]\centering\footnotesize
 \caption{Allen--Cahn star ($\varepsilon=0.004$): maximum nodal error and area error against the $1024^2$
@@ -462,10 +473,16 @@ nodal profile across an interface coincides with the exact $\tanh$ profile. The 
 467, matches the exact value $1/(\sqrt2\varepsilon)=471$ (Fig.~\ref{fig:chsharp} and Table~\ref{tab:chsharp}).
 
 \begin{figure}[t]\centering
-\includegraphics[width=\textwidth]{../figures/cahn_hilliard_sharp.pdf}
-\caption{Cahn--Hilliard with $\varepsilon=0.0015$ on $1024^2$. Top: concentration at three times and
-discrete energy. Bottom: zoom in which each square is one node; gradient magnitude; nodal values across
-an interface compared with the $\tanh$ profile.}\label{fig:chsharp}
+\begin{tabular}{@{}ccc@{}}
+\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/ch_snap0.pdf}\\[-1pt]\small (a)\end{tabular} & \begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/ch_snap1.pdf}\\[-1pt]\small (b)\end{tabular} & \begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/ch_snap2.pdf}\\[-1pt]\small (c)\end{tabular}\\
+\end{tabular}\par\smallskip
+\begin{tabular}{@{}cc@{}}
+\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/ch_zoom.pdf}\\[-1pt]\small (d)\end{tabular} & \begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/ch_gradient.pdf}\\[-1pt]\small (e)\end{tabular}\\
+\end{tabular}\par\smallskip
+\begin{tabular}{@{}cc@{}}
+\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/ch_energy.pdf}\\[-1pt]\small (f)\end{tabular} & \begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/ch_profile.pdf}\\[-1pt]\small (g)\end{tabular}\\
+\end{tabular}\par\smallskip
+\caption{Cahn--Hilliard with $\varepsilon=0.0015$ on $1024^2$. (a)--(c) Concentration at $t=0.0003$, $0.0033$ and $0.0333$; the box in (c) marks the region shown in (d). (d) Zoom in which each square is one node. (e) Gradient magnitude at the final time. (f) Discrete energy. (g) Nodal values along a grid line crossing an interface, compared with the $\tanh$ profile.}\label{fig:chsharp}
 \end{figure}
 \begin{table}[t]\centering\footnotesize
 \caption{Cahn--Hilliard with $\varepsilon=0.0015$ on $1024^2$, stabilized SAV ($S=4$).}\label{tab:chsharp}
@@ -488,12 +505,14 @@ prescribed values and tractions, and singular solutions. The elastostatic formul
 as Poisson's ratio approaches one half (Tables~S1 and~S2).
 
 \begin{figure}[t]\centering
-\includegraphics[width=0.5\textwidth]{../figures/scheme_comparison.pdf}
+\begin{tabular}{@{}c@{}}
+\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/scheme_comparison.pdf}\end{tabular}\\
+\end{tabular}\par\smallskip
 \caption{Planar interface: maximum nodal error versus resolution for five operators.}\label{fig:compare}
 \end{figure}
 
 \subsection{Performance}
-A phase-field time step costs $O(N^d\log N)$ operations with fast cosine transforms. On the CPU of Table~ef{tab:env} this amounted to between $10^{7}$ and $5\times10^{7}$ unknowns per second (Table~\ref{tab:perf}). Absolute timings
+A phase-field time step costs $O(N^d\log N)$ operations with fast cosine transforms. On the CPU of Table~\ref{tab:env} this amounted to between $10^{7}$ and $5\times10^{7}$ unknowns per second (Table~\ref{tab:perf}). Absolute timings
 depend on the hardware; the complexity does not. \input{tables/gpu_note.tex}
 
 \begin{table}[t]\centering\footnotesize

@@ -62,6 +62,7 @@ python experiments/run_all.py            # ~25 min on one core (E8c alone ~8 min
 #   E15: --only E15_init_0.004_384, E15_ref_0.004_384, E15_dt1_0.004_384, E15_dt8_0.004_384, E15_dt32_0.004_384
 # --only E8c_stage0, E8c_stage1, E8c_stage2, then E8c_finalize and E8fig
 python experiments/make_tables.py
+python experiments/make_figures.py      # individual figure panels -> figures/panels/
 python paper/tools/make_jsc.py && python paper/tools/make_supplement_jsc.py && python paper/tools/make_submission_jsc.py
 cd paper/submission_jsc && latexmk -pdf manuscript.tex supplementary.tex      # Journal of Scientific Computing
 # other versions (need elsarticle.cls): python paper/tools/make_supplement.py, then latexmk in paper/

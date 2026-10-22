@@ -177,7 +177,38 @@ T(r"""amounts to between $10^7$ and $3\times10^7$ unknowns per second""",
   r"""amounted to between $@@mdps_lo@@$ and $@@mdps_hi@@$ unknowns per second""")
 
 body = body.replace("with $N^2$ unknowns (one CPU core).", "with $N^2$ unknowns, on the CPU of Table~\\ref{tab:env}.")
-body = re.sub(r"On one CPU core this\s+amounted", "On the CPU of Table~\\ref{tab:env} this amounted", body)
+body = re.sub(r"On one CPU core this\s+amounted", lambda m: r"On the CPU of Table~\ref{tab:env} this amounted", body)
+
+# ---- figures: individual panels (experiments/make_figures.py) arranged here
+def _cell(f, w, lab):
+    return r"\includegraphics{../figures/panels/" + f + ".pdf}" + (r"\\[-1pt]\small " + lab if lab else "")
+def panels(rows, caption, label, star=False):
+    out = ["\\begin{figure}[t]\\centering"]
+    for row in rows:
+        out.append("\\begin{tabular}{@{}" + "c" * len(row) + "@{}}")
+        out.append(" & ".join(r"\begin{tabular}{@{}c@{}}" + _cell(f, w, lab) + r"\end{tabular}" for f, w, lab in row) + "\\\\")
+        out.append("\\end{tabular}\\par\\smallskip")
+    out.append("\\caption{" + caption + "}\\label{" + label + "}\n\\end{figure}")
+    return "\n".join(out)
+FIGS = {
+ "fig:trac": panels([[("trac_error", "0.48", "(a)"), ("trac_grid", "0.40", "(b)")], [("trac_cellsize", "0.48", "(c)")]],
+   r"Corner singularity at the end of a traction-free face ($\nu=0.3$). (a) Relative $H^1$ error versus number of unknowns for uniform and automatic refinement, with the scaled indicator. (b) Grid generated after 12 refinement cycles; the red edge is the traction-free face and the star marks the singular point. (c) Cell size versus distance to the singular point on the grid of (b).", "fig:trac"),
+ "fig:q2": panels([[("q2_error", "0.48", "(a)"), ("q2_time", "0.48", "(b)")]],
+   r"Collocation (IHWC) versus $Q_2$ finite elements on identical grids. (a) Error versus number of unknowns. (b) Solve time versus error for IHWC and for $Q_2$ with CG and the fast-diagonalization preconditioner, a sparse direct solver, and CG with algebraic multigrid (converged solves only).", "fig:q2"),
+ "fig:res": panels([[("resolution", "0.6", "")]],
+   r"Planar interface ($\varepsilon=0.01$): maximum nodal error versus nodes per $\sqrt2\varepsilon$ (data in Table~S5).", "fig:res"),
+ "fig:star": panels([[("star_levelsets", "0.48", "(a)"), ("star_zoom", "0.44", "(b)")], [("star_gradient", "0.48", "(c)")]],
+   r"Allen--Cahn star, $\varepsilon=0.004$, at $t=120$. (a) Zero level sets of the reference and of the $256^2$ solutions, and the initial interface. (b) Zoom at a tip, with the $256^2$ grid nodes. (c) Gradient magnitude of the reference solution.", "fig:star"),
+ "fig:chsharp": panels([[("ch_snap0", "0.29", "(a)"), ("ch_snap1", "0.29", "(b)"), ("ch_snap2", "0.29", "(c)")],
+                        [("ch_zoom", "0.40", "(d)"), ("ch_gradient", "0.44", "(e)")],
+                        [("ch_energy", "0.48", "(f)"), ("ch_profile", "0.48", "(g)")]],
+   r"Cahn--Hilliard with $\varepsilon=0.0015$ on $1024^2$. (a)--(c) Concentration at $t=0.0003$, $0.0033$ and $0.0333$; the box in (c) marks the region shown in (d). (d) Zoom in which each square is one node. (e) Gradient magnitude at the final time. (f) Discrete energy. (g) Nodal values along a grid line crossing an interface, compared with the $\tanh$ profile.", "fig:chsharp"),
+ "fig:compare": panels([[("scheme_comparison", "0.6", "")]],
+   r"Planar interface: maximum nodal error versus resolution for five operators.", "fig:compare"),
+}
+for lab, new in FIGS.items():
+    i = body.index(r"\label{" + lab + "}"); a = body.rfind(r"\begin{figure}", 0, i); b = body.index(r"\end{figure}", i) + len(r"\end{figure}")
+    body = body[:a] + new + body[b:]
 
 # ---- renumber supplementary tables: lean S8 (t_poisson) moved to the main text
 def renum(m):

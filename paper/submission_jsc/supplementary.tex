@@ -1,6 +1,8 @@
 \documentclass[11pt]{article}
 \usepackage[textwidth=15cm,textheight=22cm]{geometry}
-\usepackage{amsmath,amssymb,amsthm,booktabs,graphicx,array}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{stix}
+\usepackage{booktabs,graphicx,array}
 \usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
 \setlength{\emergencystretch}{2.5em}
 \newtheorem*{proposition5}{Proposition 5}\newtheorem*{proposition6}{Proposition 6}\newtheorem*{theorem7}{Theorem 7}
@@ -582,7 +584,14 @@ $N$ & FDM with check (s) & Bartels--Stewart (s) & ratio\\
 \end{table}
 
 \begin{figure}[htbp]\centering
-\includegraphics[width=0.62\textwidth]{cahn_hilliard_3d.pdf}
-\caption{Three-dimensional Cahn--Hilliard on $96^3$: slices of the concentration at the final time.}
+\begin{tabular}{@{}ccc@{}}
+\includegraphics{ch3d_slice0.pdf} &
+\includegraphics{ch3d_slice1.pdf} &
+\includegraphics{ch3d_slice2.pdf}\\
+(a) & (b) & (c)
+\end{tabular}
+\caption{Three-dimensional Cahn--Hilliard on $96^3$ ($\varepsilon=0.02$, mean concentration 0.1): slices $z=0.26$ (a),
+$0.51$ (b) and $0.76$ (c) at $t=0.0375$. The run of Table~S7 was continued with a larger time step
+($\Delta t=5\times10^{-5}$, $S=2$) to show the separated phases; no timings are taken from the continuation.}
 \end{figure}
 \end{document}
