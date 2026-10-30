@@ -22,9 +22,7 @@ venv/
 *.toc
 *.spl
 paper/*.pdf
-# compiled submission (the figure PDFs in this folder ARE needed and stay tracked)
-paper/submission_jsc/manuscript.pdf
-paper/submission_jsc/supplementary.pdf
+# compiled submission (the figure PDFs in paper/submission_eabe ARE needed and stay tracked)
 paper/submission_eabe/manuscript.pdf
 paper/submission_eabe/supplementary.pdf
 

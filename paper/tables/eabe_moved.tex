@@ -1,6 +1,6 @@
 \begin{table}[htbp]\centering\small
 \caption{Computing environment and timing protocol.}
-\begin{tabular}{p{0.22\textwidth}p{0.70\textwidth}}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.22\textwidth}>{\raggedright\arraybackslash}p{0.70\textwidth}}
 \toprule
 item & value\\
 \midrule
@@ -18,7 +18,7 @@ timing protocol & wall-clock time (\texttt{time.perf\_counter}); solve times are
 
 \begin{table}[htbp]\centering\small
 \caption{Maximum nodal error and observed convergence rates for two model problems.}
-\textit{(a) Prescribed values, $-\Delta u=f$, operator $D_2$}\\[2pt]
+\textit{(a) Prescribed values, $-\Delta u=f$, operator $\mathbf D_2$}\\[2pt]
 \begin{tabular}{r cc cc}
 \toprule
 & \multicolumn{2}{c}{uniform grid} & \multicolumn{2}{c}{Chebyshev-graded grid}\\
@@ -35,10 +35,10 @@ $N$ & error & rate & error & rate\\
 \end{tabular}
 
 \medskip
-\textit{(b) Zero-slope conditions, $(I-\Delta)u=f$, uniform grid}\\[2pt]
+\textit{(b) Zero-slope conditions, $u-\Delta u=f$, uniform grid}\\[2pt]
 \begin{tabular}{r cc cc}
 \toprule
-& \multicolumn{2}{c}{$D_2$} & \multicolumn{2}{c}{$D_2^{(4)}$}\\
+& \multicolumn{2}{c}{$\mathbf D_2$} & \multicolumn{2}{c}{$\mathbf D_2^{(4)}$}\\
 $N$ & error & rate & error & rate\\
 \midrule
 8 & $3.05{\times}10^{-2}$ & -- & $4.69{\times}10^{-3}$ & --\\
@@ -57,7 +57,7 @@ $N$ & error & rate & error & rate\\
 $\kappa_{\mathrm{Syl}}$ of the Sylvester problem, normwise backward errors of fast diagonalization (FDM) and
 Bartels--Stewart (B--S), and relative difference of the two solutions.}
 \textit{(a) Grid, eigenvector conditioning and condition estimate of the Sylvester problem}\\[2pt]
-\begin{tabular}{p{0.30\textwidth}c c c c}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.30\textwidth}c c c c}
 \toprule
 grid family ($N=256$) & ends & $h_{\max}/h_{\min}$ & $\kappa(V)$ & $\kappa_{\mathrm{Syl}}$\\
 \midrule
@@ -82,7 +82,7 @@ cluster of $10^{-4}$ cells & slope & $1{\times}10^{4}$ & 40 & $9{\times}10^{16}$
 
 \medskip
 \textit{(b) Normwise backward errors and relative difference of the two solutions}\\[2pt]
-\begin{tabular}{p{0.30\textwidth}c ccc}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.30\textwidth}c ccc}
 \toprule
 grid family ($N=256$) & ends & FDM & B--S & difference\\
 \midrule
@@ -126,7 +126,7 @@ $N$ & unknowns & dense & B--S & FDM setup & FDM & DCT\\
 
 \begin{table}[htbp]\centering\small
 \caption{Cahn--Hilliard with $\varepsilon=0.0015$ on $1024^2$, stabilized SAV ($S=4$).}
-\begin{tabular}{p{0.52\textwidth}p{0.38\textwidth}}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.52\textwidth}>{\raggedright\arraybackslash}p{0.38\textwidth}}
 \toprule
 quantity & value\\
 \midrule

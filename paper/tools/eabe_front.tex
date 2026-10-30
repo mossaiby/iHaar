@@ -14,7 +14,7 @@
 \newcommand{\step}[1]{\par\noindent\hangindent=1.5em\hangafter=1\textbf{Step #1.}\ }
 \setlength{\emergencystretch}{2.5em}
 \newcommand{\repo}{\url{https://github.com/mossaiby/iHaar}}
-\newcommand{\archive}{\url{https://github.com/mossaiby/iHaar/releases/tag/v1.1}}
+\newcommand{\archive}{\url{https://github.com/mossaiby/iHaar/releases/tag/v1.2}}
 \journal{Engineering Analysis with Boundary Elements}
 
 \begin{document}
@@ -98,10 +98,10 @@ statements and proofs in Part~A of the Supplementary Material. The code is avail
 \toprule
 Method & Trial space and collocation points & Grids & Spectrum & Fast solver\\
 \midrule
-Classical HWCM~\cite{lepik2011solving,oruc2019nonuniform} & integrated Haar ($C^1$ quadratics); midpoints & uniform or a~priori graded & not analysed & none (dense $N^2\times N^2$ solve)\\
-Hermite-cubic OSC~\cite{dyksen1987tensor,sun1999spectral,bialecki1995matrix} & $C^1$ cubics; two Gauss points per cell & partitions as in the cited works & real, distinct eigenvalues established & matrix decomposition (MDA), FFT on uniform grids\\
-QSC~\cite{houstis1988quadratic,christara2002fast,christara2006optimal} & $C^1$ quadratics; midpoints (optimal variants perturbed) & uniform; non-uniform analysed for convergence & symmetric with trigonometric eigenvectors on uniform grids & FFT and MDA on uniform grids\\
-Quadratic IGA collocation~\cite{auricchio2010isogeometric,schillinger2013isogeometric,delorenzis2015isogeometric} & B-splines; Greville or superconvergent points & arbitrary knots; local refinement & not established for collocation; Galerkin pencils symmetric~\cite{sangalli2016isogeometric} & direct or Krylov; FDM for the Galerkin counterpart\\
+Classical HWCM~\cite{lepik2011solving,oruc2019nonuniform} & integrated Haar ($C^1$ quadratics); midpoints & uniform or a~priori graded & not analysed & none (dense $N^2\times N^2$ solve)\\\addlinespace
+Hermite-cubic OSC~\cite{dyksen1987tensor,sun1999spectral,bialecki1995matrix} & $C^1$ cubics; two Gauss points per cell & partitions as in the cited works & real, distinct eigenvalues established & matrix decomposition (MDA), FFT on uniform grids\\\addlinespace
+QSC~\cite{houstis1988quadratic,christara2002fast,christara2006optimal} & $C^1$ quadratics; midpoints (optimal variants perturbed) & uniform; non-uniform analysed for convergence & symmetric with trigonometric eigenvectors on uniform grids & FFT and MDA on uniform grids\\\addlinespace
+Quadratic IGA collocation~\cite{auricchio2010isogeometric,schillinger2013isogeometric,delorenzis2015isogeometric} & B-splines; Greville or superconvergent points & arbitrary knots; local refinement & not established for collocation; Galerkin pencils symmetric~\cite{sangalli2016isogeometric} & direct or Krylov; FDM for the Galerkin counterpart\\\addlinespace
 This work & $C^1$ quadratics; midpoints & arbitrary graded tensor grids & real, simple, nonpositive on every grid (Result~\ref{thm:spectrum}) & FDM on any tensor grid, with a safeguard; DCT/DST on uniform grids\\
 \bottomrule
 \end{tabular}
@@ -121,22 +121,22 @@ as unknowns.
 The key observation is that the nodal values and the cell values of $u''$ are linked by an exact
 three-term relation, derived in~\ref{app:identity}:
 \begin{equation}\label{eq:identity}
-LU+b=Ac,
+\mathbf L\mathbf U+\mathbf b=\mathbf A\mathbf c,
 \end{equation}
-where $L$ is a tridiagonal difference matrix, $A$ a tridiagonal averaging matrix, and $b$ contains the
-prescribed end values. The second derivative at the nodes is therefore $c=D_2U+e$, with $D_2=A^{-1}L$
-and a boundary vector $e$. Instead of the dense integration matrices of classical HWCM, only two
+where $\mathbf L$ is a tridiagonal difference matrix, $\mathbf A$ a tridiagonal averaging matrix, and $\mathbf b$ contains the
+prescribed end values; $\mathbf U$ and $\mathbf c$ collect the nodal values $U_k$ and the cell values $c_k$. The second derivative at the nodes is therefore $\mathbf c=\mathbf D_2\mathbf U+\mathbf e$, with $\mathbf D_2=\mathbf A^{-1}\mathbf L$
+and a boundary vector $\mathbf e$. Instead of the dense integration matrices of classical HWCM, only two
 tridiagonal matrices need to be assembled. Slopes follow in closed form as well, which gives the
-first-derivative matrix $D_1$ and the end slopes needed for traction conditions (Algorithm~1).
+first-derivative matrix $\mathbf D_1$ and the end slopes needed for traction conditions (Algorithm~1).
 Fig.~\ref{fig:pipeline} summarizes how these one-dimensional operators lead to the fast solvers of
 Section~\ref{sec:tensor}.
 
 \begin{algorithm}[t]\small\hrule\smallskip
 \noindent\textbf{Algorithm 1: one-dimensional operators} (\texttt{ihaar/core.py}, class \texttt{Grid1D}).
 Input: knots $t_0<\dots<t_N$ and the type of each end (value prescribed, or zero slope).
-\step{1} Compute the cell widths and midpoints, and assemble the tridiagonal matrices $L$ and $A$ (\ref{app:identity}).
-\step{2} Factorize $A$ (tridiagonal LU) and form $D_2=A^{-1}L$ and the boundary vectors $e_i=A^{-1}b_i$.
-\step{3} Form the first-derivative matrix $D_1$ by summing the cell values of $u''$ along the grid~\eqref{eq:D1}.
+\step{1} Compute the cell widths and midpoints, and assemble the tridiagonal matrices $\mathbf L$ and $\mathbf A$ (\ref{app:identity}).
+\step{2} Factorize $\mathbf A$ (tridiagonal LU) and form $\mathbf D_2=\mathbf A^{-1}\mathbf L$ and the boundary vectors $\mathbf e_i=\mathbf A^{-1}\mathbf b_i$.
+\step{3} Form the first-derivative matrix $\mathbf D_1$ by summing the cell values of $u''$ along the grid~\eqref{eq:D1}.
 \step{4} Form the end slopes $s'(a)$ and $s'(b)$ as row vectors, for traction conditions.
 \smallskip\hrule
 \end{algorithm}
@@ -151,14 +151,14 @@ multidimensional problem is then solved by dense matrix products instead of one 
 \subsection{Main result: the fast solver always works}
 \begin{theorem}[Spectrum on every grid]\label{thm:spectrum}
 On every strictly increasing grid, and whether a value or a zero slope is prescribed at each end, the
-second-derivative matrix $D_2=A^{-1}L$ has real, distinct and nonpositive eigenvalues. It therefore has a
-real eigenvector matrix $V$, and fast diagonalization is well defined.
+second-derivative matrix $\mathbf D_2=\mathbf A^{-1}\mathbf L$ has real, distinct and nonpositive eigenvalues. It therefore has a
+real eigenvector matrix $\mathbf V$, and fast diagonalization is well defined.
 \end{theorem}
 
 In plain terms: whatever grid the user or the refinement algorithm produces, the fast solver of
 Section~\ref{sec:tensor} can be used, without complex arithmetic and without restrictions such as a bounded
-ratio between neighbouring cells. On uniform grids $D_2$ is symmetric, and the result is easy. On graded
-grids $D_2$ is not symmetric, and the proof (Result~2 in the Supplementary Material) uses the theory of
+ratio between neighbouring cells. On uniform grids $\mathbf D_2$ is symmetric, and the result is easy. On graded
+grids $\mathbf D_2$ is not symmetric, and the proof (Result~2 in the Supplementary Material) uses the theory of
 oscillation matrices, developed by Gantmacher and Krein for vibrating mechanical
 systems~\cite{gantmacher2002oscillation}. Fig.~\ref{fig:spectrum} illustrates the result on a grid whose
 cells differ in size by three orders of magnitude in random order. The theorem says that the solver is
@@ -167,25 +167,26 @@ Section~\ref{sec:robust}.
 
 \begin{figure}[t]\centering
 \begin{tabular}{@{}cc@{}}
-\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/spec_grid.pdf}\\[-1pt]\small (a)\end{tabular} &
-\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/spec_eigs.pdf}\\[-1pt]\small (b)\end{tabular}\\
+\begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/spec_grid.pdf}}\end{tabular} &
+\begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/spec_eigs.pdf}}\end{tabular}\\
+\small (a) & \small (b)\\
 \end{tabular}
 \caption{Theorem~\ref{thm:spectrum} on a strongly non-uniform grid ($N=48$). (a) Cell sizes, spanning three
-orders of magnitude in random order. (b) Eigenvalues of $D_2$ for both types of end condition: all are
+orders of magnitude in random order. (b) Eigenvalues of $\mathbf D_2$ for both types of end condition: all are
 real (to machine precision), distinct and nonpositive.}\label{fig:spectrum}
 \end{figure}
 
 \subsection{Uniform grids: cosine transforms, fourth order and mass conservation}
-On a uniform grid, $D_2$ is symmetric and is diagonalized by the discrete sine transform (prescribed
+On a uniform grid, $\mathbf D_2$ is symmetric and is diagonalized by the discrete sine transform (prescribed
 values) or cosine transform (zero slopes), so the eigenvectors need not be stored. The corrected operator
 \begin{equation}\label{eq:D24}
-D_2^{(4)}=D_2+\tfrac{h^2}{24}D_2^2
+\mathbf D_2^{(4)}=\mathbf D_2+\tfrac{h^2}{24}\mathbf D_2^2
 \end{equation}
 has the same eigenvectors and is fourth-order accurate for zero-flux and periodic problems; with general
 prescribed values, the order remains two. The correction costs nothing, because in the transform domain it
 only changes the eigenvalues. Plain HWCM has half the error constant of the three-point difference, so it
 is about twice as accurate on the same grid. Finally, with zero slopes at both ends the weighted sum
-$\sum_kh_kU_k$ is conserved exactly by $D_2$ on any grid, which gives exact mass conservation for the
+$\sum_kh_kU_k$ is conserved exactly by $\mathbf D_2$ on any grid, which gives exact mass conservation for the
 Cahn--Hilliard equation. Formal statements and proofs of these properties are Results~3 and~4 of the
 Supplementary Material.
 

@@ -1,4 +1,4 @@
-"""Individual figure panels for the JSC manuscript (one PDF per panel), arranged in LaTeX.
+"""Individual figure panels for the manuscript (one PDF per panel), arranged in LaTeX.
 
     python experiments/make_figures.py
 
@@ -25,8 +25,29 @@ W1, H1 = 2.05, 1.75           # half-width panel (inches); two fit, unscaled, in
 SQ = 1.2                      # square image panels (three per row, unscaled)
 
 
+AXW, AXH = 1.55, 1.2          # axes box of every line/scatter panel (inches), so panels side by side match
+ML, MT, MR = 0.62, 0.14, 0.1  # fixed left/top/right margins; legends below the axes only extend the bottom
+
+
 def save(fig, name):
-    fig.savefig(os.path.join(OUT, name + ".pdf"), bbox_inches="tight", pad_inches=0.02)
+    """Image panels (equal aspect, colorbars) are cropped tightly. Line/scatter panels get the fixed axes
+    box AXW x AXH at fixed left and top margins, so that their axes have the same size and, placed
+    top-aligned in LaTeX, the same vertical position; the figure grows downward for legends."""
+    axs = [a for a in fig.axes if a.get_visible()]
+    if not (len(axs) == 1 and axs[0].get_aspect() == "auto" and axs[0].axison and axs[0].name != "3d"):
+        fig.savefig(os.path.join(OUT, name + ".pdf"), bbox_inches="tight", pad_inches=0.02)
+        plt.close(fig); return
+    ax, pad = axs[0], 0.03
+    left, bottom, right = ML, 0.1, MR
+    for _ in range(2):
+        W, H = left + AXW + right, MT + AXH + bottom
+        fig.set_size_inches(W, H); ax.set_position([left / W, bottom / H, AXW / W, AXH / H])
+        bb = fig.get_tightbbox(fig.canvas.get_renderer())
+        assert bb.y1 <= H + 1e-3, f"{name}: content above the top margin"
+        left += max(0.0, -bb.x0 + pad); bottom += max(0.0, -bb.y0 + pad); right += max(0.0, bb.x1 - W + pad)
+    W, H = left + AXW + right, MT + AXH + bottom
+    fig.set_size_inches(W, H); ax.set_position([left / W, bottom / H, AXW / W, AXH / H])
+    fig.savefig(os.path.join(OUT, name + ".pdf"))
     plt.close(fig)
 
 
@@ -62,7 +83,9 @@ def elasticity_traction():
     for lab, kn, dist in (("$x$-cells", tx, lambda c: c), ("$y$-cells", ty, lambda c: 1 - c)):
         c = 0.5 * (kn[:-1] + kn[1:]); ax.plot(dist(c), np.diff(kn), ".", ms=3, label=lab)
     ax.set_xscale("log"); ax.set_yscale("log"); ax.grid(alpha=0.25)
-    ax.set_xlabel("distance to the singular point"); ax.set_ylabel("cell size $h$"); ax.legend(loc="upper left", frameon=False)
+    dmin = min(min(tx[1:]), min(1 - ty[:-1])) / 2; hmin = min(np.diff(tx).min(), np.diff(ty).min())
+    ax.set_xlim(left=dmin / 3000); ax.set_ylim(bottom=hmin / 100)     # leave the lower-left corner free for the legend
+    ax.set_xlabel("distance to the singular point"); ax.set_ylabel("cell size $h$"); ax.legend(loc="lower left", frameon=False)
     save(fig, "trac_cellsize")
     for name, lim in (("trac_grid", (0, 1, 0, 1)),):
         fig, ax = plt.subplots(figsize=(H1, H1))
@@ -109,14 +132,14 @@ def ihwc_vs_q2():
 def interface_resolution():
     r_ = R("E8a")["resolution"]; p = [r["ppw"] for r in r_]
     fig, ax = plt.subplots(figsize=(W1, H1))
-    for key, lab, mk in (("fd3", "3-point finite differences", "s-"), ("ihwc2", r"IHWC, $D_2$", "o-"), ("ihwc4", r"IHWC, $D_2^{(4)}$", "^-")):
+    for key, lab, mk in (("fd3", "3-point finite differences", "s-"), ("ihwc2", r"IHWC, $\mathbf{D}_2$", "o-"), ("ihwc4", r"IHWC, $\mathbf{D}_2^{(4)}$", "^-")):
         ax.plot(p, [r[key] for r in r_], mk, label=lab)
     ax.set_yscale("log"); nodes_axis(ax); ax.set_ylabel("max nodal error"); ax.grid(alpha=0.25)
     ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.33), ncol=1, frameon=False)
     save(fig, "resolution")
     E9 = R("E9"); rows = E9["resolution"]
     fig, ax = plt.subplots(figsize=(W1, H1))
-    for (sc, lab), mk in zip((("fd2", "3-point FD"), ("ihwc2", r"IHWC, $D_2$"), ("ihwc4", r"IHWC, $D_2^{(4)}$"),
+    for (sc, lab), mk in zip((("fd2", "3-point FD"), ("ihwc2", r"IHWC, $\mathbf{D}_2$"), ("ihwc4", r"IHWC, $\mathbf{D}_2^{(4)}$"),
                               ("pade4", "compact (Padé)"), ("spectral", "cosine pseudo-spectral")), ("s-", "o-", "^-", "v-", "d-")):
         ax.plot([r["ppw"] for r in rows], [r[sc] for r in rows], mk, label=lab)
     ax.set_yscale("log"); nodes_axis(ax); ax.set_ylabel("max nodal error"); ax.grid(alpha=0.25)
@@ -136,8 +159,8 @@ def allen_cahn_star():
     ref = L(1024, 4); xf = (np.arange(1024) + .5) / 1024
     x = (np.arange(1024) + .5) / 1024; X, Y = np.meshgrid(x, x, indexing="ij")
     ic = np.tanh((0.25 + 0.08 * np.cos(6 * np.arctan2(Y - .5, X - .5)) - np.hypot(X - .5, Y - .5)) / (np.sqrt(2) * eps))
-    styles = (((1024, 4), "k", "-", r"$1024^2$, $D_2^{(4)}$ (reference)"), ((256, 2), "tab:red", "--", r"$256^2$, $D_2$"),
-              ((256, 4), "tab:blue", "-.", r"$256^2$, $D_2^{(4)}$"))
+    styles = (((1024, 4), "k", "-", r"$1024^2$, $\mathbf{D}_2^{(4)}$ (reference)"), ((256, 2), "tab:red", "--", r"$256^2$, $\mathbf{D}_2$"),
+              ((256, 4), "tab:blue", "-.", r"$256^2$, $\mathbf{D}_2^{(4)}$"))
     fig, ax = plt.subplots(figsize=(SQ * 1.25, SQ * 1.25))
     ax.contour(xf, xf, ic.T, [0], colors="0.6", linestyles=":", linewidths=1)
     for (N, o), col, ls, lab in styles:
@@ -229,20 +252,20 @@ def cahn_hilliard_3d():
 # ----------------------------------------------------------------------------- method pipeline (schematic)
 def pipeline():
     from matplotlib.patches import FancyBboxPatch
-    fig, ax = plt.subplots(figsize=(2 * W1 + 0.6, 1.55)); ax.set_xlim(-0.15, 10.15); ax.set_ylim(0, 3.1); ax.axis("off")
+    fig, ax = plt.subplots(figsize=(2 * W1 + 0.6, 1.75)); ax.set_xlim(-0.15, 10.15); ax.set_ylim(0, 3.3); ax.axis("off")
     def box(x, y, w, h, txt, fc):
         ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.04,rounding_size=0.12", fc=fc, ec="0.3", lw=0.7))
         ax.text(x + w / 2, y + h / 2, txt, ha="center", va="center", fontsize=6.6, linespacing=1.25)
     def arrow(x0, x1, y):
         ax.annotate("", xy=(x1, y), xytext=(x0, y), arrowprops=dict(arrowstyle="-|>", lw=0.8, color="0.25"))
-    y, h = 1.75, 1.15
+    y, h = 1.95, 1.15
     box(0.0, y, 1.9, h, "1D grids\n$t_0<\\dots<t_N$\n(any grading)", "#e8eef7")
-    box(2.45, y, 2.15, h, "tridiagonal $A$, $L$\n$D_2=A^{-1}L$\n(Algorithm 1)", "#e8eef7")
-    box(5.15, y, 2.05, h, "eigenvectors $V$\nreal spectrum\n(Theorem 1)", "#fdf0d5")
-    box(7.75, y, 2.25, h, "tensor solve:\n$V_x\\,(\\hat F/\\Lambda)\\,V_y^{T}$\nmatrix products", "#e3f1e3")
+    box(2.45, y, 2.15, h, "tridiagonal $\\mathbf{A}$, $\\mathbf{L}$\n$\\mathbf{D}_2=\\mathbf{A}^{-1}\\mathbf{L}$\n(Algorithm 1)", "#e8eef7")
+    box(5.15, y, 2.05, h, "eigenvectors $\\mathbf{V}$\nreal spectrum\n(Theorem 1)", "#fdf0d5")
+    box(7.75, y, 2.25, h, "tensor solve:\n$\\mathbf{V}_x\\,(\\hat{\\mathbf{F}}\\oslash\\mathbf{M})\\,\\mathbf{V}_y^{\\mathrm{T}}$\nmatrix products", "#e3f1e3")
     for a, b in ((1.9, 2.45), (4.6, 5.15), (7.2, 7.75)): arrow(a + 0.03, b - 0.03, y + h / 2)
-    box(0.0, 0.1, 4.6, 1.15, "classical HWCM:\ndense $N^2\\times N^2$ system, $O(N^6)$ work", "#f6e0e0")
-    box(5.15, 0.1, 4.85, 1.15, "this work:\n$O(N^3)$ work in 2D, on any graded grid", "#e3f1e3")
+    box(0.0, 0.05, 4.6, 1.45, "classical HWCM:\none dense $N^2\\times N^2$ system\n$O(N^6)$ work", "#f6e0e0")
+    box(5.15, 0.05, 4.85, 1.45, "this work:\n$O(N^3)$ work in 2D\non any graded grid", "#e3f1e3")
     save(fig, "pipeline")
 
 
@@ -274,13 +297,13 @@ def verification_cost():
     ax.loglog(N, [r["uniform"] for r in d], "o-", label=r"$-\Delta u=f$, uniform")
     ax.loglog(N, [r["graded"] for r in d], "s-", label=r"$-\Delta u=f$, Chebyshev-graded")
     Nn = np.array([r["N"] for r in n], float)
-    ax.loglog(Nn, [r["order2"] for r in n], "^-", label=r"$(I-\Delta)u=f$, $D_2$")
-    ax.loglog(Nn, [r["order4"] for r in n], "v-", label=r"$(I-\Delta)u=f$, $D_2^{(4)}$")
+    ax.loglog(Nn, [r["order2"] for r in n], "^-", label=r"$u-\Delta u=f$, $\mathbf{D}_2$")
+    ax.loglog(Nn, [r["order4"] for r in n], "v-", label=r"$u-\Delta u=f$, $\mathbf{D}_2^{(4)}$")
     ax.loglog(N, 0.5 * d[0]["uniform"] * (N / N[0]) ** -2, "k--", lw=0.7, label="slope $-2$")
     ax.loglog(Nn, 0.3 * n[0]["order4"] * (Nn / Nn[0]) ** -4, "k-.", lw=0.7, label="slope $-4$")
     ax.set_xlabel("cells per direction $N$"); ax.set_ylabel("maximum nodal error"); ax.grid(alpha=0.25)
     ax.xaxis.set_minor_formatter(NullFormatter())
-    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.24), ncol=2, frameon=False)
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.24), ncol=1, frameon=False)
     save(fig, "verification")
     fig, ax = plt.subplots(figsize=(W1, H1))
     dof = lambda k: [r["dofs"] for r in c if r.get(k) is not None]
@@ -290,7 +313,7 @@ def verification_cost():
     ax.loglog(dof("fdm_gemm"), [r["fdm_gemm"] for r in c], "v-", label="fast diag. (solve only)")
     ax.loglog(dof("dct"), [r["dct"] for r in c], "d-", label="cosine transform")
     loglog_dofs(ax); ax.set_ylabel("time (s)")
-    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.24), ncol=2, frameon=False)
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.24), ncol=1, frameon=False)
     save(fig, "cost")
 
 
@@ -363,7 +386,7 @@ def local_refinement():
 # ----------------------------------------------------------------------------- Allen-Cahn shrinking circle
 def allen_cahn_circle():
     E3 = R("E3"); eps, R0 = E3["eps"], E3["R0"]
-    lab = {"N64_o2": "$64^2$, $D_2$", "N64_o4": "$64^2$, $D_2^{(4)}$", "N128_o4": "$128^2$, $D_2^{(4)}$", "N256_o4": "$256^2$, $D_2^{(4)}$"}
+    lab = {"N64_o2": r"$64^2$, $\mathbf{D}_2$", "N64_o4": r"$64^2$, $\mathbf{D}_2^{(4)}$", "N128_o4": r"$128^2$, $\mathbf{D}_2^{(4)}$", "N256_o4": r"$256^2$, $\mathbf{D}_2^{(4)}$"}
     fig, ax = plt.subplots(figsize=(W1, H1))
     for k, r in E3["runs"].items(): ax.plot(r["t"], r["R2"], ".-", ms=2, label=lab.get(k, k))
     t = np.array(E3["runs"]["N256_o4"]["t"]); ax.plot(t, R0 ** 2 - 2 * eps ** 2 * t, "k--", lw=0.7, label=r"$R_0^2-2\varepsilon^2t$")
@@ -375,7 +398,35 @@ def allen_cahn_circle():
     save(fig, "ac_energy")
 
 
+# ----------------------------------------------------------------------------- 3D views of the final phase-field states
+def surfaces():
+    """Final states as surfaces, so that the steep interface walls are visible: the Allen-Cahn star
+    (1024^2 reference, whole domain and a tip at full resolution) and the thin-interface Cahn-Hilliard
+    run (1024^2, a window at full resolution)."""
+    def surf(u, x0, x1, y0, y1, name, stride=1, elev=38, azim=-58):
+        N = u.shape[0]; x = (np.arange(N) + .5) / N
+        i = np.where((x >= x0) & (x <= x1))[0][::stride]; j = np.where((x >= y0) & (x <= y1))[0][::stride]
+        X, Y = np.meshgrid(x[i], x[j], indexing="ij")
+        fig = plt.figure(figsize=(2.9, 2.6)); ax = fig.add_subplot(projection="3d")
+        ax.plot_surface(X, Y, u[np.ix_(i, j)], cmap="RdBu_r", vmin=-1, vmax=1, rstride=1, cstride=1,
+                        linewidth=0, antialiased=False, rasterized=True)
+        ax.view_init(elev=elev, azim=azim); ax.set_zlim(-1.1, 1.1); ax.set_zticks([-1, 0, 1])
+        ax.set_xticks(np.round(np.linspace(x[i[0]], x[i[-1]], 3), 2)); ax.set_yticks(np.round(np.linspace(x[j[0]], x[j[-1]], 3), 2))
+        ax.set_xlabel("$x$", labelpad=-4); ax.set_ylabel("$y$", labelpad=-4); ax.set_zlabel("$u_h$", labelpad=-6)
+        ax.tick_params(pad=-2, labelsize=6)
+        for a in (ax.xaxis, ax.yaxis, ax.zaxis): a.pane.set_alpha(0.0)
+        save(fig, name)
+    star = np.load(os.path.join(RES, "star_N1024_o4.npy"))
+    surf(star, 0, 1, 0, 1, "surf_star", stride=4)
+    row = star[:, 512]; xf = (np.arange(1024) + .5) / 1024
+    xt = xf[np.where((row[:-1] > 0) & (row[1:] <= 0))[0][-1]]
+    surf(star, xt - 0.06, xt + 0.04, 0.45, 0.55, "surf_star_tip")
+    ch = np.load(os.path.join(RES, "ch_sharp_2.npy"))
+    surf(ch, 0.44, 0.52, 0.44, 0.52, "surf_ch")
+
+
 if __name__ == "__main__":
     for f in (elasticity_traction, ihwc_vs_q2, interface_resolution, allen_cahn_star, cahn_hilliard_sharp, cahn_hilliard_3d,
-              pipeline, spectrum_graded, verification_cost, elasticity_fields, local_refinement, allen_cahn_circle):
+              pipeline, spectrum_graded, verification_cost, elasticity_fields, local_refinement, allen_cahn_circle,
+              surfaces):
         f(); print("done:", f.__name__, flush=True)

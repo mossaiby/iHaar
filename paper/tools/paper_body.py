@@ -1,15 +1,15 @@
-"""Shared body of the journal versions (JSC, EABE): the sections from "Fast solvers in two and three
-dimensions" to the conclusions of manuscript_lean.tex, with all revisions from the review rounds applied
-(qualified claims, environment table, robustness section, figure panels, renumbered supplement tables).
+"""Body of the article (used by make_eabe.py): the sections from "Fast solvers in two and three dimensions"
+to the conclusions of manuscript_lean.tex, with all revisions from the review rounds applied (qualified
+claims, environment table, robustness section, figure panels, renumbered supplement tables).
 Timing-dependent numbers are computed from the stored results."""
 import json, re
 import numpy as np
 
 
-def build_body(lean, theorems=True):
+def build_body(lean, theorems=False):
     """Return (body, NUM, missing). theorems=True renames the lean 'Result' environments and
-    references to Theorem/Proposition (JSC, proofs in the article); False keeps 'Result' (EABE,
-    proofs in Part A of the Supplementary Material). NUM holds the @@key@@ substitutions."""
+    references to Theorem/Proposition (proofs in the article); False keeps 'Result' (proofs in
+    Part A of the Supplementary Material). NUM holds the @@key@@ substitutions."""
     E7 = json.load(open("../results/E7.json")); E7b = json.load(open("../results/E7b.json"))
     # ---- timing-dependent numbers quoted in the text: always computed from the stored results
     _R = lambda n: json.load(open(f"../results/{n}.json"))
@@ -187,16 +187,8 @@ fast-diagonalization preconditioner (@@direct_t@@~s at @@direct_n@@ unknowns),""
     body = re.sub(r"On one CPU core this\s+amounted", lambda m: r"On the CPU of Table~\ref{tab:env} this amounted", body)
 
     # ---- figures: individual panels (experiments/make_figures.py) arranged here
-    def _cell(f, w, lab):
-        return r"\includegraphics{../figures/panels/" + f + ".pdf}" + (r"\\[-1pt]\small " + lab if lab else "")
     def panels(rows, caption, label, star=False):
-        out = ["\\begin{figure}[t]\\centering"]
-        for row in rows:
-            out.append("\\begin{tabular}{@{}" + "c" * len(row) + "@{}}")
-            out.append(" & ".join(r"\begin{tabular}{@{}c@{}}" + _cell(f, w, lab) + r"\end{tabular}" for f, w, lab in row) + "\\\\")
-            out.append("\\end{tabular}\\par\\smallskip")
-        out.append("\\caption{" + caption + "}\\label{" + label + "}\n\\end{figure}")
-        return "\n".join(out)
+        return panel_figure([[(f, lab) for f, w, lab in row] for row in rows], caption, label)
     FIGS = {
      "fig:trac": panels([[("trac_error", "0.48", "(a)"), ("trac_grid", "0.40", "(b)")], [("trac_cellsize", "0.48", "(c)")]],
        r"Corner singularity at the end of a traction-free face ($\nu=0.3$). (a) Relative $H^1$ error versus number of unknowns for uniform and automatic refinement, with the scaled indicator. (b) Grid generated after 12 refinement cycles; the red edge is the traction-free face and the star marks the singular point. (c) Cell size versus distance to the singular point on the grid of (b).", "fig:trac"),
@@ -228,6 +220,22 @@ fast-diagonalization preconditioner (@@direct_t@@~s at @@direct_n@@ unknowns),""
         for k, v in RES:
             body = body.replace(v + r"~\ref{" + k + "}", r"Result~\ref{" + k + "}")
     return body, NUM, miss
+
+
+def panel_figure(rows, caption, label, width=None, path="../figures/panels/"):
+    """Figure of panels (rows of (file, label)). The panels of a row are aligned at their top edges (the
+    line plots of make_figures.py have identical axes boxes and top margins, so their axes line up), and
+    the panel labels form a separate row below the tallest panel."""
+    opt = "[width=" + width + "]" if width else ""
+    s = ["\\begin{figure}[t]\\centering"]
+    for row in rows:
+        s.append("\\begin{tabular}{@{}" + "c" * len(row) + "@{}}")
+        s.append(" & ".join(r"\begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics" + opt + "{" + path + f +
+                            ".pdf}}\end{tabular}" for f, lab in row) + "\\\\")
+        if any(lab for f, lab in row):
+            s.append(" & ".join(r"\small " + lab if lab else "" for f, lab in row) + "\\\\")
+        s.append("\\end{tabular}\\par\\smallskip")
+    return "\n".join(s) + "\n\\caption{" + caption + "}\\label{" + label + "}\n\\end{figure}"
 
 
 def bibliography(lean, full, extra=("fallat2011totally",)):

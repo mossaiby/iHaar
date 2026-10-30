@@ -109,8 +109,5 @@ extra = "".join("\\begin{table}[htbp]\\centering\\small\n\\caption{" + c + "}\n\
     ("t_Ssens", "Sensitivity to the stabilization $S$ and the time step: largest $|u_h|$, error against the reference at $T=2000\\varepsilon^2$, and $\\xi$ at $T$ ($\\varepsilon=0.004$, $384^2$)."),
     ("t_3d", "Three-dimensional manufactured problem $(I-\\Delta)u=f$: maximum nodal error, observed rate and solve time.")])
 lean = out.replace("\\begin{figure}[htbp]\\centering", "\\clearpage\n" + extra + "\\begin{figure}[htbp]\\centering", 1)
-open("supplementary.tex", "w").write(lean)                                   # lean version: with proofs and S17-S19
-open("supplementary_full.tex", "w").write(out.replace(r"\newif\ifincludeproof \includeprooftrue", r"\newif\ifincludeproof \includeprooffalse")
-                                          .replace("Part~A states the results of the main text formally and proves them. Part~B contains additional",
-                                                   "The proofs are given in the appendices of the main text. Part~B contains additional"))
-print("supplementary.tex and supplementary_full.tex written")
+open("supplementary.tex", "w").write(lean)                                   # with proofs (Part A) and S17-S19
+print("supplementary.tex written")

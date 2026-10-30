@@ -17,7 +17,7 @@ slope,
 \frac{U_2-U_1}{d_1}-\frac{2(U_1-g_0)}{h_1}&=\Big(\frac{3h_1}{4}-\frac{h_1^2}{8d_1}\Big)c_1+\frac{h_2^2}{8d_1}c_2 &&\text{(value prescribed)},\label{eq:dirrow}\\
 \frac{U_2-U_1}{d_1}&=\Big(h_1-\frac{h_1^2}{8d_1}\Big)c_1+\frac{h_2^2}{8d_1}c_2 &&\text{(zero slope)},\label{eq:neurow}
 \end{align}
-and symmetrically at the right end. The matrix $A$ has positive entries and is strictly diagonally dominant
+and symmetrically at the right end. The matrix $\mathbf A$ has positive entries and is strictly diagonally dominant
 by columns, so it is always invertible. The collocation problem $s''(m_k)=f(m_k)$ has a unique solution if a
 value is prescribed at one or both ends; if the slope vanishes at both ends, it is solvable if and only if
 $\sum_kh_kf(m_k)=0$, and unique up to a constant (Result~1 of the Supplementary Material).
@@ -27,33 +27,33 @@ $\sigma_0=2(U_1-g_0)/h_1-c_1h_1/4$ (zero for a zero-slope end),
 \begin{equation}\label{eq:D1}
 s'(m_k)=\sigma_0+\sum_{j<k}h_jc_j+\tfrac12h_kc_k,\qquad s'(b)=\sigma_0+\sum_kh_kc_k,
 \end{equation}
-which, with $c=D_2U+e$, gives the first-derivative matrix $D_1$ and the end slopes of Algorithm~1.
+which, with $\mathbf c=\mathbf D_2\mathbf U+\mathbf e$, gives the first-derivative matrix $\mathbf D_1$ and the end slopes of Algorithm~1.
 
 %==========================================================================
 \section{Time stepping for the phase-field equations}\label{app:sav}
 %==========================================================================
-With $K$ the discrete $-\Delta$, $G=I$ (Allen--Cahn) or $G=K$ (Cahn--Hilliard), $\bar u=2u^n-u^{n-1}$, and a
-scalar auxiliary variable $r$~\cite{shen2018scalar}, the stabilized SAV-BDF2 scheme reads
+Let $\mathbf u^n$ be the vector of nodal values at time step $n$, $\mathbf K$ the discrete $-\Delta$, $\mathbf G=\mathbf I$ (Allen--Cahn) or $\mathbf G=\mathbf K$ (Cahn--Hilliard), $\bar{\mathbf u}=2\mathbf u^n-\mathbf u^{n-1}$, and
+$r$ a scalar auxiliary variable~\cite{shen2018scalar}. The stabilized SAV-BDF2 scheme reads
 \begin{align}
-\frac{3u^{n+1}-4u^n+u^{n-1}}{2\Delta t}&=-G\mu^{n+1},\label{eq:sav1}\\
-\mu^{n+1}&=\varepsilon^2Ku^{n+1}+S(u^{n+1}-\bar u)+r^{n+1}\bar b,\label{eq:sav1b}\\
-3r^{n+1}-4r^n+r^{n-1}&=\tfrac12\langle\bar b,3u^{n+1}-4u^n+u^{n-1}\rangle_h,\label{eq:sav2}
+\frac{3\mathbf u^{n+1}-4\mathbf u^n+\mathbf u^{n-1}}{2\Delta t}&=-\mathbf G\boldsymbol\mu^{n+1},\label{eq:sav1}\\
+\boldsymbol\mu^{n+1}&=\varepsilon^2\mathbf K\mathbf u^{n+1}+S(\mathbf u^{n+1}-\bar{\mathbf u})+r^{n+1}\bar{\mathbf b},\label{eq:sav1b}\\
+3r^{n+1}-4r^n+r^{n-1}&=\tfrac12\langle\bar{\mathbf b},3\mathbf u^{n+1}-4\mathbf u^n+\mathbf u^{n-1}\rangle_h,\label{eq:sav2}
 \end{align}
-where $\bar b=f(\bar u)/\sqrt{E_1(\bar u)+C}$ is the scaled nonlinearity, $f(u)=u^3-u$,
-$E_1(u)=\langle\frac14(u^2-1)^2,1\rangle_h$, $C>0$, and $S\ge0$ a stabilization constant. On a uniform
+where $\bar{\mathbf b}=f(\bar{\mathbf u})/\sqrt{E_1(\bar{\mathbf u})+C}$ is the scaled nonlinearity, $f(u)=u^3-u$ applied entrywise,
+$E_1(\mathbf u)=\langle\frac14(\mathbf u^2-1)^2,1\rangle_h$, $C>0$, and $S\ge0$ a stabilization constant. On a uniform
 grid, for every time step and every $S\ge0$, the scheme has a unique solution, the Cahn--Hilliard scheme
 conserves the discrete mass exactly, and a modified energy never increases (Result~5 of the Supplementary
 Material). Algorithm~2 lists one step.
 
 \begin{algorithm}[t]\small\hrule\smallskip
 \noindent\textbf{Algorithm 2: one SAV-BDF2 time step} (\texttt{ihaar/phasefield.py}).
-Precomputed: the transform $\mathcal T$ (DCT-II, or the eigenvectors $V$), the symbols $\hat\lambda$ of
-$-K$, $\hat G=1$ (AC) or $\hat\lambda$ (CH), and $\hat S_2=3+2\Delta t\,\hat G(\varepsilon^2\hat\lambda+S)$.
-Stored from previous steps: $\hat u^n$, $\hat u^{n-1}$, $u^n$, $u^{n-1}$, $r^n$, $r^{n-1}$.
-\step{1} Compute $\bar u=2u^n-u^{n-1}$ and $\bar b=f(\bar u)/\sqrt{E_{1,h}(\bar u)+C}$, and transform, $\hat{\bar b}=\mathcal T\bar b$ (one forward transform).
-\step{2} Compute $\hat g=4\hat u^n-\hat u^{n-1}$, $\hat p=(\hat g+2\Delta t\,S\hat G\,\hat{\bar u})/\hat S_2$ and $\hat q=-2\Delta t\,\hat G\hat{\bar b}/\hat S_2$.
-\step{3} Update the scalar, $r^{n+1}=\big(4r^n-r^{n-1}+\tfrac12\langle\hat{\bar b},3\hat p-\hat g\rangle\big)/\big(3-\tfrac32\langle\hat{\bar b},\hat q\rangle\big)$, with inner products evaluated in the orthonormal transform domain.
-\step{4} Set $\hat u^{n+1}=\hat p+r^{n+1}\hat q$ and $u^{n+1}=\mathcal T^{-1}\hat u^{n+1}$ (one inverse transform).
+Precomputed: the transform $\mathcal T$ (DCT-II, or the eigenvectors $\mathbf V$), the symbols $\hat{\boldsymbol\lambda}$ of
+$-\mathbf K$, $\hat{\mathbf G}=\mathbf 1$ (AC) or $\hat{\boldsymbol\lambda}$ (CH), and $\hat{\mathbf S}_2=3+2\Delta t\,\hat{\mathbf G}(\varepsilon^2\hat{\boldsymbol\lambda}+S)$ (entrywise).
+Stored from previous steps: $\hat{\mathbf u}^n$, $\hat{\mathbf u}^{n-1}$, $\mathbf u^n$, $\mathbf u^{n-1}$, $r^n$, $r^{n-1}$.
+\step{1} Compute $\bar{\mathbf u}=2\mathbf u^n-\mathbf u^{n-1}$ and $\bar{\mathbf b}=f(\bar{\mathbf u})/\sqrt{E_1(\bar{\mathbf u})+C}$, and transform, $\hat{\bar{\mathbf b}}=\mathcal T\bar{\mathbf b}$ (one forward transform).
+\step{2} Compute $\hat{\mathbf g}=4\hat{\mathbf u}^n-\hat{\mathbf u}^{n-1}$, $\hat{\mathbf p}=(\hat{\mathbf g}+2\Delta t\,S\hat{\mathbf G}\,\hat{\bar{\mathbf u}})/\hat{\mathbf S}_2$ and $\hat{\mathbf q}=-2\Delta t\,\hat{\mathbf G}\hat{\bar{\mathbf b}}/\hat{\mathbf S}_2$ (entrywise).
+\step{3} Update the scalar, $r^{n+1}=\big(4r^n-r^{n-1}+\tfrac12\langle\hat{\bar{\mathbf b}},3\hat{\mathbf p}-\hat{\mathbf g}\rangle\big)/\big(3-\tfrac32\langle\hat{\bar{\mathbf b}},\hat{\mathbf q}\rangle\big)$, with inner products evaluated in the orthonormal transform domain.
+\step{4} Set $\hat{\mathbf u}^{n+1}=\hat{\mathbf p}+r^{n+1}\hat{\mathbf q}$ and $\mathbf u^{n+1}=\mathcal T^{-1}\hat{\mathbf u}^{n+1}$ (one inverse transform).
 \smallskip\hrule
 \end{algorithm}
 

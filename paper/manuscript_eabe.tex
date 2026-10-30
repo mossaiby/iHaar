@@ -14,7 +14,7 @@
 \newcommand{\step}[1]{\par\noindent\hangindent=1.5em\hangafter=1\textbf{Step #1.}\ }
 \setlength{\emergencystretch}{2.5em}
 \newcommand{\repo}{\url{https://github.com/mossaiby/iHaar}}
-\newcommand{\archive}{\url{https://github.com/mossaiby/iHaar/releases/tag/v1.1}}
+\newcommand{\archive}{\url{https://github.com/mossaiby/iHaar/releases/tag/v1.2}}
 \journal{Engineering Analysis with Boundary Elements}
 
 \begin{document}
@@ -94,14 +94,14 @@ statements and proofs in Part~A of the Supplementary Material. The code is avail
 
 \begin{table}[t]\centering\footnotesize
 \caption{Comparison with the closest spline-collocation approaches, to the best of our knowledge. ``Spectrum'' refers to the one-dimensional collocation operator used by fast diagonalization or matrix decomposition.}\label{tab:closest}
-\begin{tabular}{p{0.14\textwidth}p{0.175\textwidth}p{0.13\textwidth}p{0.23\textwidth}p{0.17\textwidth}}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.14\textwidth}>{\raggedright\arraybackslash}p{0.175\textwidth}>{\raggedright\arraybackslash}p{0.13\textwidth}>{\raggedright\arraybackslash}p{0.23\textwidth}>{\raggedright\arraybackslash}p{0.17\textwidth}}
 \toprule
 Method & Trial space and collocation points & Grids & Spectrum & Fast solver\\
 \midrule
-Classical HWCM~\cite{lepik2011solving,oruc2019nonuniform} & integrated Haar ($C^1$ quadratics); midpoints & uniform or a~priori graded & not analysed & none (dense $N^2\times N^2$ solve)\\
-Hermite-cubic OSC~\cite{dyksen1987tensor,sun1999spectral,bialecki1995matrix} & $C^1$ cubics; two Gauss points per cell & partitions as in the cited works & real, distinct eigenvalues established & matrix decomposition (MDA), FFT on uniform grids\\
-QSC~\cite{houstis1988quadratic,christara2002fast,christara2006optimal} & $C^1$ quadratics; midpoints (optimal variants perturbed) & uniform; non-uniform analysed for convergence & symmetric with trigonometric eigenvectors on uniform grids & FFT and MDA on uniform grids\\
-Quadratic IGA collocation~\cite{auricchio2010isogeometric,schillinger2013isogeometric,delorenzis2015isogeometric} & B-splines; Greville or superconvergent points & arbitrary knots; local refinement & not established for collocation; Galerkin pencils symmetric~\cite{sangalli2016isogeometric} & direct or Krylov; FDM for the Galerkin counterpart\\
+Classical HWCM~\cite{lepik2011solving,oruc2019nonuniform} & integrated Haar ($C^1$ quadratics); midpoints & uniform or a~priori graded & not analysed & none (dense $N^2\times N^2$ solve)\\\addlinespace
+Hermite-cubic OSC~\cite{dyksen1987tensor,sun1999spectral,bialecki1995matrix} & $C^1$ cubics; two Gauss points per cell & partitions as in the cited works & real, distinct eigenvalues established & matrix decomposition (MDA), FFT on uniform grids\\\addlinespace
+QSC~\cite{houstis1988quadratic,christara2002fast,christara2006optimal} & $C^1$ quadratics; midpoints (optimal variants perturbed) & uniform; non-uniform analysed for convergence & symmetric with trigonometric eigenvectors on uniform grids & FFT and MDA on uniform grids\\\addlinespace
+Quadratic IGA collocation~\cite{auricchio2010isogeometric,schillinger2013isogeometric,delorenzis2015isogeometric} & B-splines; Greville or superconvergent points & arbitrary knots; local refinement & not established for collocation; Galerkin pencils symmetric~\cite{sangalli2016isogeometric} & direct or Krylov; FDM for the Galerkin counterpart\\\addlinespace
 This work & $C^1$ quadratics; midpoints & arbitrary graded tensor grids & real, simple, nonpositive on every grid (Theorem~\ref{thm:spectrum}) & FDM on any tensor grid, with a safeguard; DCT/DST on uniform grids\\
 \bottomrule
 \end{tabular}
@@ -121,22 +121,22 @@ as unknowns.
 The key observation is that the nodal values and the cell values of $u''$ are linked by an exact
 three-term relation, derived in~\ref{app:identity}:
 \begin{equation}\label{eq:identity}
-LU+b=Ac,
+\mathbf L\mathbf U+\mathbf b=\mathbf A\mathbf c,
 \end{equation}
-where $L$ is a tridiagonal difference matrix, $A$ a tridiagonal averaging matrix, and $b$ contains the
-prescribed end values. The second derivative at the nodes is therefore $c=D_2U+e$, with $D_2=A^{-1}L$
-and a boundary vector $e$. Instead of the dense integration matrices of classical HWCM, only two
+where $\mathbf L$ is a tridiagonal difference matrix, $\mathbf A$ a tridiagonal averaging matrix, and $\mathbf b$ contains the
+prescribed end values; $\mathbf U$ and $\mathbf c$ collect the nodal values $U_k$ and the cell values $c_k$. The second derivative at the nodes is therefore $\mathbf c=\mathbf D_2\mathbf U+\mathbf e$, with $\mathbf D_2=\mathbf A^{-1}\mathbf L$
+and a boundary vector $\mathbf e$. Instead of the dense integration matrices of classical HWCM, only two
 tridiagonal matrices need to be assembled. Slopes follow in closed form as well, which gives the
-first-derivative matrix $D_1$ and the end slopes needed for traction conditions (Algorithm~1).
+first-derivative matrix $\mathbf D_1$ and the end slopes needed for traction conditions (Algorithm~1).
 Fig.~\ref{fig:pipeline} summarizes how these one-dimensional operators lead to the fast solvers of
 Section~\ref{sec:tensor}.
 
 \begin{algorithm}[t]\small\hrule\smallskip
 \noindent\textbf{Algorithm 1: one-dimensional operators} (\texttt{ihaar/core.py}, class \texttt{Grid1D}).
 Input: knots $t_0<\dots<t_N$ and the type of each end (value prescribed, or zero slope).
-\step{1} Compute the cell widths and midpoints, and assemble the tridiagonal matrices $L$ and $A$ (\ref{app:identity}).
-\step{2} Factorize $A$ (tridiagonal LU) and form $D_2=A^{-1}L$ and the boundary vectors $e_i=A^{-1}b_i$.
-\step{3} Form the first-derivative matrix $D_1$ by summing the cell values of $u''$ along the grid~\eqref{eq:D1}.
+\step{1} Compute the cell widths and midpoints, and assemble the tridiagonal matrices $\mathbf L$ and $\mathbf A$ (\ref{app:identity}).
+\step{2} Factorize $\mathbf A$ (tridiagonal LU) and form $\mathbf D_2=\mathbf A^{-1}\mathbf L$ and the boundary vectors $\mathbf e_i=\mathbf A^{-1}\mathbf b_i$.
+\step{3} Form the first-derivative matrix $\mathbf D_1$ by summing the cell values of $u''$ along the grid~\eqref{eq:D1}.
 \step{4} Form the end slopes $s'(a)$ and $s'(b)$ as row vectors, for traction conditions.
 \smallskip\hrule
 \end{algorithm}
@@ -151,14 +151,14 @@ multidimensional problem is then solved by dense matrix products instead of one 
 \subsection{Main result: the fast solver always works}
 \begin{theorem}[Spectrum on every grid]\label{thm:spectrum}
 On every strictly increasing grid, and whether a value or a zero slope is prescribed at each end, the
-second-derivative matrix $D_2=A^{-1}L$ has real, distinct and nonpositive eigenvalues. It therefore has a
-real eigenvector matrix $V$, and fast diagonalization is well defined.
+second-derivative matrix $\mathbf D_2=\mathbf A^{-1}\mathbf L$ has real, distinct and nonpositive eigenvalues. It therefore has a
+real eigenvector matrix $\mathbf V$, and fast diagonalization is well defined.
 \end{theorem}
 
 In plain terms: whatever grid the user or the refinement algorithm produces, the fast solver of
 Section~\ref{sec:tensor} can be used, without complex arithmetic and without restrictions such as a bounded
-ratio between neighbouring cells. On uniform grids $D_2$ is symmetric, and the result is easy. On graded
-grids $D_2$ is not symmetric, and the proof (Result~2 in the Supplementary Material) uses the theory of
+ratio between neighbouring cells. On uniform grids $\mathbf D_2$ is symmetric, and the result is easy. On graded
+grids $\mathbf D_2$ is not symmetric, and the proof (Result~2 in the Supplementary Material) uses the theory of
 oscillation matrices, developed by Gantmacher and Krein for vibrating mechanical
 systems~\cite{gantmacher2002oscillation}. Fig.~\ref{fig:spectrum} illustrates the result on a grid whose
 cells differ in size by three orders of magnitude in random order. The theorem says that the solver is
@@ -167,40 +167,43 @@ Section~\ref{sec:robust}.
 
 \begin{figure}[t]\centering
 \begin{tabular}{@{}cc@{}}
-\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/spec_grid.pdf}\\[-1pt]\small (a)\end{tabular} &
-\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/spec_eigs.pdf}\\[-1pt]\small (b)\end{tabular}\\
+\begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/spec_grid.pdf}}\end{tabular} &
+\begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/spec_eigs.pdf}}\end{tabular}\\
+\small (a) & \small (b)\\
 \end{tabular}
 \caption{Theorem~\ref{thm:spectrum} on a strongly non-uniform grid ($N=48$). (a) Cell sizes, spanning three
-orders of magnitude in random order. (b) Eigenvalues of $D_2$ for both types of end condition: all are
+orders of magnitude in random order. (b) Eigenvalues of $\mathbf D_2$ for both types of end condition: all are
 real (to machine precision), distinct and nonpositive.}\label{fig:spectrum}
 \end{figure}
 
 \subsection{Uniform grids: cosine transforms, fourth order and mass conservation}
-On a uniform grid, $D_2$ is symmetric and is diagonalized by the discrete sine transform (prescribed
+On a uniform grid, $\mathbf D_2$ is symmetric and is diagonalized by the discrete sine transform (prescribed
 values) or cosine transform (zero slopes), so the eigenvectors need not be stored. The corrected operator
 \begin{equation}\label{eq:D24}
-D_2^{(4)}=D_2+\tfrac{h^2}{24}D_2^2
+\mathbf D_2^{(4)}=\mathbf D_2+\tfrac{h^2}{24}\mathbf D_2^2
 \end{equation}
 has the same eigenvectors and is fourth-order accurate for zero-flux and periodic problems; with general
 prescribed values, the order remains two. The correction costs nothing, because in the transform domain it
 only changes the eigenvalues. Plain HWCM has half the error constant of the three-point difference, so it
 is about twice as accurate on the same grid. Finally, with zero slopes at both ends the weighted sum
-$\sum_kh_kU_k$ is conserved exactly by $D_2$ on any grid, which gives exact mass conservation for the
+$\sum_kh_kU_k$ is conserved exactly by $\mathbf D_2$ on any grid, which gives exact mass conservation for the
 Cahn--Hilliard equation. Formal statements and proofs of these properties are Results~3 and~4 of the
 Supplementary Material.
 
 %==========================================================================
 \section{Fast solvers in two and three dimensions}\label{sec:tensor}
 %==========================================================================
-On a rectangle, the unknowns form a matrix $U_{ij}$, and the one-dimensional operators act along the grid
-lines: $U_{xx}=D_2^xU$ and $U_{yy}=U(D_2^y)^{\mathsf T}$, plus boundary terms. An equation such as
+On a rectangle, the unknowns form a matrix $\mathbf U=(U_{ij})$, and the one-dimensional operators act along
+the grid lines: $\mathbf U_{xx}=\mathbf D_2^x\mathbf U$ and $\mathbf U_{yy}=\mathbf U(\mathbf D_2^y)^{\mathsf T}$, plus boundary terms. An equation such as
 $\alpha u_{xx}+\beta u_{yy}+\gamma u=f$ becomes a Sylvester matrix equation. With the eigendecompositions
-$D_2^x=V_x\Lambda_xV_x^{-1}$ and $D_2^y=V_y\Lambda_yV_y^{-1}$, which exist by Theorem~\ref{thm:spectrum},
+$\mathbf D_2^x=\mathbf V_x\boldsymbol\Lambda_x\mathbf V_x^{-1}$ and $\mathbf D_2^y=\mathbf V_y\boldsymbol\Lambda_y\mathbf V_y^{-1}$, which exist by Theorem~\ref{thm:spectrum},
 its solution is
 \begin{equation}\label{eq:fdm}
-U=V_x\Big[\big(V_x^{-1}\tilde FV_y^{-\mathsf T}\big)\oslash\big(\alpha\lambda^x_i+\beta\lambda^y_j+\gamma\big)_{ij}\Big]V_y^{\mathsf T},
+\mathbf U=\mathbf V_x\Big[\big(\mathbf V_x^{-1}\tilde{\mathbf F}\mathbf V_y^{-\mathsf T}\big)\oslash\mathbf M\Big]\mathbf V_y^{\mathsf T},
+\qquad M_{ij}=\alpha\lambda^x_i+\beta\lambda^y_j+\gamma,
 \end{equation}
-where $\oslash$ denotes entrywise division. This takes four dense matrix products after a one-time
+where $\tilde{\mathbf F}$ is the right-hand side including the boundary terms, $\lambda^x_i$ and $\lambda^y_j$
+are the eigenvalues, and $\oslash$ denotes entrywise division. This takes four dense matrix products after a one-time
 eigendecomposition. In three dimensions the cost is $O(N^4)$, and on uniform grids fast cosine
 transforms reduce it to $O(N^d\log N)$. All operations are dense matrix products, fast transforms or
 pointwise operations. The code takes the array library (NumPy or CuPy) as a parameter, so the same code
@@ -210,7 +213,7 @@ runs on CPUs and GPUs.
 \section{Phase-field solvers}\label{sec:pf}
 %==========================================================================
 We solve the Allen--Cahn (AC) and Cahn--Hilliard (CH) equations with zero-flux boundaries,
-$u_t=-\mathcal G\mu$, $\mu=-\varepsilon^2\Delta u+u^3-u$, with $\mathcal G=I$ for AC and $\mathcal G=-\Delta$
+$u_t=-\mathcal G\mu$, $\mu=-\varepsilon^2\Delta u+u^3-u$, with $\mathcal G$ the identity for AC and $\mathcal G=-\Delta$
 for CH. The parameter $\varepsilon$ sets the interface thickness. Across an equilibrium interface
 $u\approx\tanh(d/\sqrt2\varepsilon)$, where $d$ is the distance to the interface. In time we use the
 stabilized SAV-BDF2 scheme~\cite{shen2018scalar} (\ref{app:sav}). It treats the nonlinear term explicitly
@@ -235,7 +238,7 @@ displacement component. For compressible materials the number of iterations does
 as Poisson's ratio approaches one half it grows strongly (Tables~S1 and~S2), so the solver is intended for
 compressible materials. On a traction edge, the edge displacements become unknowns, and
 $\boldsymbol\sigma\mathbf n=\mathbf t$ is enforced at the edge midpoints. The normal derivatives come from
-the end slopes of Algorithm~1, and the tangential derivatives from $D_1$ along the edge. Where two traction
+the end slopes of Algorithm~1, and the tangential derivatives from $\mathbf D_1$ along the edge. Where two traction
 edges meet, the two normal stresses are prescribed. Unlike quadratic isogeometric collocation, where
 pointwise traction conditions can lose accuracy and an ``enhanced'' boundary equation is
 recommended~\cite{delorenzis2015isogeometric}, plain collocation stays second-order accurate here. With tractions on two adjacent edges and $\nu=0.3$,
@@ -274,7 +277,7 @@ and the tables are generated from the stored results.
 
 \subsection{Verification and cost}\label{sec:verify}
 Fig.~\ref{fig:verify}(a) shows the maximum nodal error for $-\Delta u=f$ with prescribed values and
-$u=e^x\sin\pi y+x^2y$, on uniform and on Chebyshev-graded grids, and for $(I-\Delta)u=f$ with zero slopes
+$u=e^x\sin\pi y+x^2y$, on uniform and on Chebyshev-graded grids, and for $u-\Delta u=f$ with zero slopes
 and $u=\cos\pi x\cos2\pi y+0.3\cos3\pi x$. The plain operator converges at second order on both grid
 families, and the corrected operator at fourth order. Second-order convergence was also observed for
 smooth elastostatic solutions with prescribed displacements and with tractions, in three dimensions, and
@@ -286,7 +289,8 @@ grid is only a few times slower.
 
 \begin{figure}[t]\centering
 \begin{tabular}{@{}cc@{}}
-\begin{tabular}{@{}c@{}}\includegraphics[width=0.47\textwidth]{../figures/panels/verification.pdf}\\[-1pt]\small (a)\end{tabular} & \begin{tabular}{@{}c@{}}\includegraphics[width=0.47\textwidth]{../figures/panels/cost.pdf}\\[-1pt]\small (b)\end{tabular}\\
+\begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/verification.pdf}}\end{tabular} & \begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/cost.pdf}}\end{tabular}\\
+\small (a) & \small (b)\\
 \end{tabular}\par\smallskip
 \caption{(a) Maximum nodal error versus cells per direction for two model problems. (b) Wall time of one solve with $N^2$ unknowns for the classical dense HWCM system, the Bartels--Stewart algorithm, fast diagonalization and the cosine transform (data in Tables~S21 and~S23).}\label{fig:verify}
 \end{figure}
@@ -321,10 +325,12 @@ Section~\ref{sec:local} shows how this factor can be removed.
 
 \begin{figure}[t]\centering
 \begin{tabular}{@{}cc@{}}
-\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/trac_error.pdf}\\[-1pt]\small (a)\end{tabular} & \begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/trac_grid.pdf}\\[-1pt]\small (b)\end{tabular}\\
+\begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/trac_error.pdf}}\end{tabular} & \begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/trac_grid.pdf}}\end{tabular}\\
+\small (a) & \small (b)\\
 \end{tabular}\par\smallskip
 \begin{tabular}{@{}c@{}}
-\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/trac_cellsize.pdf}\\[-1pt]\small (c)\end{tabular}\\
+\begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/trac_cellsize.pdf}}\end{tabular}\\
+\small (c)\\
 \end{tabular}\par\smallskip
 \caption{Corner singularity at the end of a traction-free face ($\nu=0.3$). (a) Relative $H^1$ error versus number of unknowns for uniform and automatic refinement, with the scaled indicator. (b) Grid generated after 12 refinement cycles; the red edge is the traction-free face and the star marks the singular point. (c) Cell size versus distance to the singular point on the grid of (b).}\label{fig:trac}
 \end{figure}
@@ -336,10 +342,12 @@ size of the smallest cell.
 
 \begin{figure}[t]\centering
 \begin{tabular}{@{}cc@{}}
-\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/el_vm.pdf}\\[-1pt]\small (a)\end{tabular} & \begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/el_vm_zoom.pdf}\\[-1pt]\small (b)\end{tabular}\\
+\begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/el_vm.pdf}}\end{tabular} & \begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/el_vm_zoom.pdf}}\end{tabular}\\
+\small (a) & \small (b)\\
 \end{tabular}\par\smallskip
 \begin{tabular}{@{}c@{}}
-\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/el_vm_line.pdf}\\[-1pt]\small (c)\end{tabular}\\
+\begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/el_vm_line.pdf}}\end{tabular}\\
+\small (c)\\
 \end{tabular}\par\smallskip
 \caption{Stress field for the corner singularity of Fig.~\ref{fig:trac} ($\nu=0.3$), computed on the grid of Fig.~\ref{fig:trac}(b). (a) von Mises stress on the whole domain (logarithmic colour scale). (b) Zoom at the singular point, with the grid lines. (c) von Mises stress along the line at $45^\circ$ into the body versus distance to the singular point, compared with the exact field.}\label{fig:elfields}
 \end{figure}
@@ -368,7 +376,8 @@ Memory counts operators, factorizations and Krylov vectors.}\label{tab:q2}
 \end{table}
 \begin{figure}[t]\centering
 \begin{tabular}{@{}cc@{}}
-\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/q2_error.pdf}\\[-1pt]\small (a)\end{tabular} & \begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/q2_time.pdf}\\[-1pt]\small (b)\end{tabular}\\
+\begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/q2_error.pdf}}\end{tabular} & \begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/q2_time.pdf}}\end{tabular}\\
+\small (a) & \small (b)\\
 \end{tabular}\par\smallskip
 \caption{Collocation (IHWC) versus $Q_2$ finite elements on identical grids. (a) Error versus number of unknowns. (b) Solve time versus error for IHWC and for $Q_2$ with CG and the fast-diagonalization preconditioner, a sparse direct solver, and CG with algebraic multigrid (converged solves only).}\label{fig:q2}
 \end{figure}
@@ -398,7 +407,8 @@ done.
 
 \begin{figure}[t]\centering
 \begin{tabular}{@{}cc@{}}
-\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/local_patches.pdf}\\[-1pt]\small (a)\end{tabular} & \begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/local_error.pdf}\\[-1pt]\small (b)\end{tabular}\\
+\begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/local_patches.pdf}}\end{tabular} & \begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/local_error.pdf}}\end{tabular}\\
+\small (a) & \small (b)\\
 \end{tabular}\par\smallskip
 \caption{Local refinement by composite patches (Laplace equation, corner singularity at the star). (a) Nested patches, here with $L=4$ levels of $8\times8$ cells. (b) Relative $H^1$ error versus unknowns for uniform grids, the tensor grid with the same local resolution, and the composite patches, with fitted rates (balanced refinement, $L=2\log_2n$).}\label{fig:local}
 \end{figure}
@@ -412,7 +422,7 @@ is 25 times more accurate than finite differences, and at 7.2 nodes 110 times.
 
 \begin{figure}[t]\centering
 \begin{tabular}{@{}c@{}}
-\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/resolution.pdf}\end{tabular}\\
+\begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/resolution.pdf}}\end{tabular}\\
 \end{tabular}\par\smallskip
 \caption{Planar interface ($\varepsilon=0.01$): maximum nodal error versus nodes per $\sqrt2\varepsilon$ (data in Table~S5).}\label{fig:res}
 \end{figure}
@@ -424,23 +434,26 @@ monotonically on all grids (Fig.~\ref{fig:ac} and Table~S12).
 
 \begin{figure}[t]\centering
 \begin{tabular}{@{}cc@{}}
-\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/ac_radius.pdf}\\[-1pt]\small (a)\end{tabular} & \begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/ac_energy.pdf}\\[-1pt]\small (b)\end{tabular}\\
+\begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/ac_radius.pdf}}\end{tabular} & \begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/ac_energy.pdf}}\end{tabular}\\
+\small (a) & \small (b)\\
 \end{tabular}\par\smallskip
 \caption{Allen--Cahn shrinking circle ($\varepsilon=0.02$, $\Delta t=0.05$). (a) Squared radius versus time, with the sharp-interface law. (b) Discrete energy.}\label{fig:ac}
 \end{figure}
 
 For the Allen--Cahn six-fold star with $\varepsilon=0.004$, evolving under curvature flow, a $1024^2$
 computation serves as the reference (Fig.~\ref{fig:star} and Table~\ref{tab:star}). On $256^2$, which gives
-only 1.45 nodes per $\sqrt2\varepsilon$, the sharp tips move too slowly with $D_2$, while $D_2^{(4)}$ follows
-the reference. $D_2^{(4)}$ on $256^2$ is as accurate in area as $D_2$ on $512^2$, with a quarter of the
-unknowns, and on $512^2$ it is 16 times more accurate than $D_2$.
+only 1.45 nodes per $\sqrt2\varepsilon$, the sharp tips move too slowly with $\mathbf D_2$, while $\mathbf D_2^{(4)}$ follows
+the reference. $\mathbf D_2^{(4)}$ on $256^2$ is as accurate in area as $\mathbf D_2$ on $512^2$, with a quarter of the
+unknowns, and on $512^2$ it is 16 times more accurate than $\mathbf D_2$.
 
 \begin{figure}[t]\centering
 \begin{tabular}{@{}cc@{}}
-\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/star_levelsets.pdf}\\[-1pt]\small (a)\end{tabular} & \begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/star_zoom.pdf}\\[-1pt]\small (b)\end{tabular}\\
+\begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/star_levelsets.pdf}}\end{tabular} & \begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/star_zoom.pdf}}\end{tabular}\\
+\small (a) & \small (b)\\
 \end{tabular}\par\smallskip
 \begin{tabular}{@{}c@{}}
-\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/star_gradient.pdf}\\[-1pt]\small (c)\end{tabular}\\
+\begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/star_gradient.pdf}}\end{tabular}\\
+\small (c)\\
 \end{tabular}\par\smallskip
 \caption{Allen--Cahn star, $\varepsilon=0.004$, at $t=120$. (a) Zero level sets of the reference and of the $256^2$ solutions, and the initial interface. (b) Zoom at a tip, with the $256^2$ grid nodes. (c) Gradient magnitude of the reference solution.}\label{fig:star}
 \end{figure}
@@ -458,22 +471,44 @@ nodal profile across an interface coincides with the exact $\tanh$ profile. The 
 
 \begin{figure}[t]\centering
 \begin{tabular}{@{}ccc@{}}
-\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/ch_snap0.pdf}\\[-1pt]\small (a)\end{tabular} & \begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/ch_snap1.pdf}\\[-1pt]\small (b)\end{tabular} & \begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/ch_snap2.pdf}\\[-1pt]\small (c)\end{tabular}\\
+\begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/ch_snap0.pdf}}\end{tabular} & \begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/ch_snap1.pdf}}\end{tabular} & \begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/ch_snap2.pdf}}\end{tabular}\\
+\small (a) & \small (b) & \small (c)\\
 \end{tabular}\par\smallskip
 \begin{tabular}{@{}cc@{}}
-\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/ch_zoom.pdf}\\[-1pt]\small (d)\end{tabular} & \begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/ch_gradient.pdf}\\[-1pt]\small (e)\end{tabular}\\
+\begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/ch_zoom.pdf}}\end{tabular} & \begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/ch_gradient.pdf}}\end{tabular}\\
+\small (d) & \small (e)\\
 \end{tabular}\par\smallskip
 \begin{tabular}{@{}cc@{}}
-\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/ch_energy.pdf}\\[-1pt]\small (f)\end{tabular} & \begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/ch_profile.pdf}\\[-1pt]\small (g)\end{tabular}\\
+\begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/ch_energy.pdf}}\end{tabular} & \begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/ch_profile.pdf}}\end{tabular}\\
+\small (f) & \small (g)\\
 \end{tabular}\par\smallskip
 \caption{Cahn--Hilliard with $\varepsilon=0.0015$ on $1024^2$. (a)--(c) Concentration at $t=0.0003$, $0.0033$ and $0.0333$; the box in (c) marks the region shown in (d). (d) Zoom in which each square is one node. (e) Gradient magnitude at the final time. (f) Discrete energy. (g) Nodal values along a grid line crossing an interface, compared with the $\tanh$ profile.}\label{fig:chsharp}
 \end{figure}
+Fig.~\ref{fig:surf} shows the final states of the two
+thin-interface computations as surfaces. The solution consists of flat plateaus at $u=\pm1$ joined by
+walls only a few cells wide. The zooms are plotted at full resolution, one surface facet per node: the
+walls are resolved without visible oscillations, and $|u_h|$ exceeds one by at most 2.8\%
+for Cahn--Hilliard and only at round-off level
+for Allen--Cahn.
+
+\begin{figure}[t]\centering
+\begin{tabular}{@{}cc@{}}
+\begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/surf_star.pdf}}\end{tabular} & \begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/surf_star_tip.pdf}}\end{tabular}\\
+\small (a) & \small (b)\\
+\end{tabular}\par\smallskip
+\begin{tabular}{@{}c@{}}
+\begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/surf_ch.pdf}}\end{tabular}\\
+\small (c)\\
+\end{tabular}\par\smallskip
+\caption{Final states as surfaces. (a) Allen--Cahn star at $t=120$ ($1024^2$ reference, every fourth node shown). (b) Zoom at a tip of (a), every node shown. (c) Cahn--Hilliard with $\varepsilon=0.0015$ on $1024^2$ at the final time, window $[0.44,0.52]^2$ (containing the zoom of Fig.~\ref{fig:chsharp}(d)), every node shown.}\label{fig:surf}
+\end{figure}
+
 \subsection{When not to use the method}\label{sec:compare}
 Because every uniform-grid operator considered here is diagonalized by the same cosine transform, we
-could compare five of them within the identical solver: the three-point difference, $D_2$, $D_2^{(4)}$,
+could compare five of them within the identical solver: the three-point difference, $\mathbf D_2$, $\mathbf D_2^{(4)}$,
 the classical compact (Pad\'e) scheme, and the cosine pseudo-spectral method (Fig.~\ref{fig:compare} and
 Table~S14). Plain HWCM beats the three-point difference by a factor of two, and the compact scheme is about
-1.4 times more accurate than $D_2^{(4)}$. For smooth problems on uniform boxes with zero-flux or periodic
+1.4 times more accurate than $\mathbf D_2^{(4)}$. For smooth problems on uniform boxes with zero-flux or periodic
 conditions, however, the pseudo-spectral method is far more accurate than all others. For such problems we
 recommend pseudo-spectral methods. The strength of the present method lies in graded and adaptive grids,
 prescribed values and tractions, and singular solutions. The elastostatic formulation is also not robust
@@ -481,7 +516,7 @@ as Poisson's ratio approaches one half (Tables~S1 and~S2).
 
 \begin{figure}[t]\centering
 \begin{tabular}{@{}c@{}}
-\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/scheme_comparison.pdf}\end{tabular}\\
+\begin{tabular}[t]{@{}c@{}}\raisebox{-\height}{\includegraphics{../figures/panels/scheme_comparison.pdf}}\end{tabular}\\
 \end{tabular}\par\smallskip
 \caption{Planar interface: maximum nodal error versus resolution for five operators.}\label{fig:compare}
 \end{figure}
@@ -497,13 +532,13 @@ Table~\ref{tab:guide} summarizes the choices that worked in our computations.
 
 \begin{table}[t]\centering\small
 \caption{Practical recommendations.}\label{tab:guide}
-\begin{tabular}{p{0.22\textwidth}p{0.72\textwidth}}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.22\textwidth}>{\raggedright\arraybackslash}p{0.72\textwidth}}
 \toprule
 Decision & Recommendation\\
 \midrule
-Plain or corrected operator & Use $D_2^{(4)}$ for zero-flux or periodic problems, since it costs nothing extra. With general prescribed values, use $D_2$, because the correction does not raise the order there.\\
+Plain or corrected operator & Use $\mathbf D_2^{(4)}$ for zero-flux or periodic problems, since it costs nothing extra. With general prescribed values, use $\mathbf D_2$, because the correction does not raise the order there.\\
 When not to use IHWC & For smooth or phase-field problems on uniform boxes with zero-flux or periodic conditions, a cosine pseudo-spectral operator is far more accurate at the same cost (Section~\ref{sec:compare}).\\
-Interface resolution & Use at least 1.5 nodes per $\sqrt2\varepsilon$ with $D_2^{(4)}$. Expect a nodal error of about $10^{-3}$ at 2 to 3 nodes, and about $10^{-4}$ at 3.5 nodes (Table~S5).\\
+Interface resolution & Use at least 1.5 nodes per $\sqrt2\varepsilon$ with $\mathbf D_2^{(4)}$. Expect a nodal error of about $10^{-3}$ at 2 to 3 nodes, and about $10^{-4}$ at 3.5 nodes (Table~S5).\\
 Time stepping (AC, CH) & Use SAV-BDF2 with the smallest stabilization that keeps $\xi=r/\sqrt{E_{1,h}+C}$ near one: $S\approx1$ to 2 for $\Delta t\lesssim\varepsilon^2$, and 2 to 4 for larger steps (Table~S17). Keep $\Delta t$ of order $\varepsilon^2$ when the coarsening dynamics matter, and verify by halving $\Delta t$; $\xi\approx1$ alone does not guarantee accuracy.\\
 Solver & On uniform grids, use cosine or sine transforms. On graded grids, use fast diagonalization (well defined by Theorem~\ref{thm:spectrum}) with the built-in check and Bartels--Stewart fallback, and heed the ill-conditioning warning. For coupled systems such as elasticity, use GMRES with the block preconditioner.\\
 Adaptivity at singularities & Use the Haar-detail indicator with D\"orfler parameter $\theta\approx0.6$, a neighbour ratio of at most two, and an initial grid of $8\times8$ cells.\\
@@ -568,7 +603,7 @@ responsibility for the accuracy, integrity and content of the published article.
 
 \section*{Code and data availability}
 The implementation, the tests and the scripts that produce every table and figure are openly available
-at \repo; the version used in this paper is the GitHub release v1.1 (\archive). Dependencies are listed in
+at \repo; the version used in this paper is the GitHub release v1.2 (\archive). Dependencies are listed in
 \texttt{requirements.txt} (CPU) and \texttt{requirements-gpu.txt} (GPU). All data are generated by these
 scripts; the stored results (\texttt{results/*.json}) and the generated tables are part of the release.
 
@@ -591,7 +626,7 @@ slope,
 \frac{U_2-U_1}{d_1}-\frac{2(U_1-g_0)}{h_1}&=\Big(\frac{3h_1}{4}-\frac{h_1^2}{8d_1}\Big)c_1+\frac{h_2^2}{8d_1}c_2 &&\text{(value prescribed)},\label{eq:dirrow}\\
 \frac{U_2-U_1}{d_1}&=\Big(h_1-\frac{h_1^2}{8d_1}\Big)c_1+\frac{h_2^2}{8d_1}c_2 &&\text{(zero slope)},\label{eq:neurow}
 \end{align}
-and symmetrically at the right end. The matrix $A$ has positive entries and is strictly diagonally dominant
+and symmetrically at the right end. The matrix $\mathbf A$ has positive entries and is strictly diagonally dominant
 by columns, so it is always invertible. The collocation problem $s''(m_k)=f(m_k)$ has a unique solution if a
 value is prescribed at one or both ends; if the slope vanishes at both ends, it is solvable if and only if
 $\sum_kh_kf(m_k)=0$, and unique up to a constant (Result~1 of the Supplementary Material).
@@ -601,33 +636,33 @@ $\sigma_0=2(U_1-g_0)/h_1-c_1h_1/4$ (zero for a zero-slope end),
 \begin{equation}\label{eq:D1}
 s'(m_k)=\sigma_0+\sum_{j<k}h_jc_j+\tfrac12h_kc_k,\qquad s'(b)=\sigma_0+\sum_kh_kc_k,
 \end{equation}
-which, with $c=D_2U+e$, gives the first-derivative matrix $D_1$ and the end slopes of Algorithm~1.
+which, with $\mathbf c=\mathbf D_2\mathbf U+\mathbf e$, gives the first-derivative matrix $\mathbf D_1$ and the end slopes of Algorithm~1.
 
 %==========================================================================
 \section{Time stepping for the phase-field equations}\label{app:sav}
 %==========================================================================
-With $K$ the discrete $-\Delta$, $G=I$ (Allen--Cahn) or $G=K$ (Cahn--Hilliard), $\bar u=2u^n-u^{n-1}$, and a
-scalar auxiliary variable $r$~\cite{shen2018scalar}, the stabilized SAV-BDF2 scheme reads
+Let $\mathbf u^n$ be the vector of nodal values at time step $n$, $\mathbf K$ the discrete $-\Delta$, $\mathbf G=\mathbf I$ (Allen--Cahn) or $\mathbf G=\mathbf K$ (Cahn--Hilliard), $\bar{\mathbf u}=2\mathbf u^n-\mathbf u^{n-1}$, and
+$r$ a scalar auxiliary variable~\cite{shen2018scalar}. The stabilized SAV-BDF2 scheme reads
 \begin{align}
-\frac{3u^{n+1}-4u^n+u^{n-1}}{2\Delta t}&=-G\mu^{n+1},\label{eq:sav1}\\
-\mu^{n+1}&=\varepsilon^2Ku^{n+1}+S(u^{n+1}-\bar u)+r^{n+1}\bar b,\label{eq:sav1b}\\
-3r^{n+1}-4r^n+r^{n-1}&=\tfrac12\langle\bar b,3u^{n+1}-4u^n+u^{n-1}\rangle_h,\label{eq:sav2}
+\frac{3\mathbf u^{n+1}-4\mathbf u^n+\mathbf u^{n-1}}{2\Delta t}&=-\mathbf G\boldsymbol\mu^{n+1},\label{eq:sav1}\\
+\boldsymbol\mu^{n+1}&=\varepsilon^2\mathbf K\mathbf u^{n+1}+S(\mathbf u^{n+1}-\bar{\mathbf u})+r^{n+1}\bar{\mathbf b},\label{eq:sav1b}\\
+3r^{n+1}-4r^n+r^{n-1}&=\tfrac12\langle\bar{\mathbf b},3\mathbf u^{n+1}-4\mathbf u^n+\mathbf u^{n-1}\rangle_h,\label{eq:sav2}
 \end{align}
-where $\bar b=f(\bar u)/\sqrt{E_1(\bar u)+C}$ is the scaled nonlinearity, $f(u)=u^3-u$,
-$E_1(u)=\langle\frac14(u^2-1)^2,1\rangle_h$, $C>0$, and $S\ge0$ a stabilization constant. On a uniform
+where $\bar{\mathbf b}=f(\bar{\mathbf u})/\sqrt{E_1(\bar{\mathbf u})+C}$ is the scaled nonlinearity, $f(u)=u^3-u$ applied entrywise,
+$E_1(\mathbf u)=\langle\frac14(\mathbf u^2-1)^2,1\rangle_h$, $C>0$, and $S\ge0$ a stabilization constant. On a uniform
 grid, for every time step and every $S\ge0$, the scheme has a unique solution, the Cahn--Hilliard scheme
 conserves the discrete mass exactly, and a modified energy never increases (Result~5 of the Supplementary
 Material). Algorithm~2 lists one step.
 
 \begin{algorithm}[t]\small\hrule\smallskip
 \noindent\textbf{Algorithm 2: one SAV-BDF2 time step} (\texttt{ihaar/phasefield.py}).
-Precomputed: the transform $\mathcal T$ (DCT-II, or the eigenvectors $V$), the symbols $\hat\lambda$ of
-$-K$, $\hat G=1$ (AC) or $\hat\lambda$ (CH), and $\hat S_2=3+2\Delta t\,\hat G(\varepsilon^2\hat\lambda+S)$.
-Stored from previous steps: $\hat u^n$, $\hat u^{n-1}$, $u^n$, $u^{n-1}$, $r^n$, $r^{n-1}$.
-\step{1} Compute $\bar u=2u^n-u^{n-1}$ and $\bar b=f(\bar u)/\sqrt{E_{1,h}(\bar u)+C}$, and transform, $\hat{\bar b}=\mathcal T\bar b$ (one forward transform).
-\step{2} Compute $\hat g=4\hat u^n-\hat u^{n-1}$, $\hat p=(\hat g+2\Delta t\,S\hat G\,\hat{\bar u})/\hat S_2$ and $\hat q=-2\Delta t\,\hat G\hat{\bar b}/\hat S_2$.
-\step{3} Update the scalar, $r^{n+1}=\big(4r^n-r^{n-1}+\tfrac12\langle\hat{\bar b},3\hat p-\hat g\rangle\big)/\big(3-\tfrac32\langle\hat{\bar b},\hat q\rangle\big)$, with inner products evaluated in the orthonormal transform domain.
-\step{4} Set $\hat u^{n+1}=\hat p+r^{n+1}\hat q$ and $u^{n+1}=\mathcal T^{-1}\hat u^{n+1}$ (one inverse transform).
+Precomputed: the transform $\mathcal T$ (DCT-II, or the eigenvectors $\mathbf V$), the symbols $\hat{\boldsymbol\lambda}$ of
+$-\mathbf K$, $\hat{\mathbf G}=\mathbf 1$ (AC) or $\hat{\boldsymbol\lambda}$ (CH), and $\hat{\mathbf S}_2=3+2\Delta t\,\hat{\mathbf G}(\varepsilon^2\hat{\boldsymbol\lambda}+S)$ (entrywise).
+Stored from previous steps: $\hat{\mathbf u}^n$, $\hat{\mathbf u}^{n-1}$, $\mathbf u^n$, $\mathbf u^{n-1}$, $r^n$, $r^{n-1}$.
+\step{1} Compute $\bar{\mathbf u}=2\mathbf u^n-\mathbf u^{n-1}$ and $\bar{\mathbf b}=f(\bar{\mathbf u})/\sqrt{E_1(\bar{\mathbf u})+C}$, and transform, $\hat{\bar{\mathbf b}}=\mathcal T\bar{\mathbf b}$ (one forward transform).
+\step{2} Compute $\hat{\mathbf g}=4\hat{\mathbf u}^n-\hat{\mathbf u}^{n-1}$, $\hat{\mathbf p}=(\hat{\mathbf g}+2\Delta t\,S\hat{\mathbf G}\,\hat{\bar{\mathbf u}})/\hat{\mathbf S}_2$ and $\hat{\mathbf q}=-2\Delta t\,\hat{\mathbf G}\hat{\bar{\mathbf b}}/\hat{\mathbf S}_2$ (entrywise).
+\step{3} Update the scalar, $r^{n+1}=\big(4r^n-r^{n-1}+\tfrac12\langle\hat{\bar{\mathbf b}},3\hat{\mathbf p}-\hat{\mathbf g}\rangle\big)/\big(3-\tfrac32\langle\hat{\bar{\mathbf b}},\hat{\mathbf q}\rangle\big)$, with inner products evaluated in the orthonormal transform domain.
+\step{4} Set $\hat{\mathbf u}^{n+1}=\hat{\mathbf p}+r^{n+1}\hat{\mathbf q}$ and $\mathbf u^{n+1}=\mathcal T^{-1}\hat{\mathbf u}^{n+1}$ (one inverse transform).
 \smallskip\hrule
 \end{algorithm}
 

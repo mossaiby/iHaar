@@ -3,7 +3,7 @@
 Every table is designed to fit the text width without scaling: wide tables are
 emitted as two halves stacked vertically, and long text columns wrap (p{...}).
 """
-import json, os
+import json, os, re
 import numpy as np
 
 R = lambda n: json.load(open(os.path.join("results", n + ".json")))
@@ -23,10 +23,12 @@ def rate(a, b, na, nb):
 
 
 def w(name, s):
+    s = re.sub(r"(?<![A-Za-z\\])D_([12])", r"\\mathbf D_\1", s)     # matrices in upright bold
     open(os.path.join(T, name + ".tex"), "w").write(s)
 
 
 def tab(spec, head, rows):
+    spec = spec.replace("p{", ">{\\raggedright\\arraybackslash}p{")      # wrapped text left-aligned, not justified
     return "\\begin{tabular}{" + spec + "}\n\\toprule\n" + head + "\\\\\n\\midrule\n" + "".join(r + "\\\\\n" for r in rows) + "\\bottomrule\n\\end{tabular}\n"
 
 
@@ -47,7 +49,7 @@ top = tab("r cc cc", "& \\multicolumn{2}{c}{uniform grid} & \\multicolumn{2}{c}{
 bot = tab("r cc cc", "& \\multicolumn{2}{c}{$D_2$} & \\multicolumn{2}{c}{$D_2^{(4)}$}\\\\\n$N$ & error & rate & error & rate",
           [f"{n[i]['N']} & {sci(n[i]['order2'])} & {rr(n,i,'order2')} & {sci(n[i]['order4'])} & {rr(n,i,'order4')}" for i in range(len(n))])
 w("t_poisson", stack(part("(a) Prescribed values, $-\\Delta u=f$, operator $D_2$", top),
-                     part("(b) Zero-slope conditions, $(I-\\Delta)u=f$, uniform grid", bot)))
+                     part("(b) Zero-slope conditions, $u-\\Delta u=f$, uniform grid", bot)))
 f = lambda r, k: "--" if k not in r else "%.3f" % r[k]
 w("t_cost", tab("rr ccccc", "$N$ & unknowns & dense & B--S & FDM setup & FDM & DCT",
                 [f"{r['N']} & {r['dofs']} & {f(r,'dense')} & {f(r,'bartels_stewart')} & {f(r,'fdm_setup')} & {f(r,'fdm_gemm')} & {f(r,'dct')}" for r in E1["cost"]]))

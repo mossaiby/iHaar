@@ -35,7 +35,7 @@ materials. Truly local refinement is shown to be compatible with the fast solver
 patches, demonstrated for a scalar corner singularity.
 
 All results are reproducible. The implementation, the tests and the scripts that produce every table and
-figure are openly available at https://github.com/mossaiby/iHaar (release v1.1).
+figure are openly available at https://github.com/mossaiby/iHaar (release v1.2).
 
 The manuscript is original, has not been published, and is not under consideration elsewhere. I am the sole
 author and declare no competing interests.
