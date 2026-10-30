@@ -29,6 +29,7 @@ ihaar/elasticity.py  plane-strain collocation on graded tensor grids (Dirichlet)
 ihaar/fem_q2.py      reference Q2 (biquadratic) FEM on tensor grids, for comparison
 ihaar/elasticity_bc.py  mixed Dirichlet/traction edges (extended unknowns, traction rows,
                      traction-traction corners, Neumann-closure FDM preconditioner)
+ihaar/composite.py   local refinement by nested composite patches (Poisson), each patch solved by FDM
 tests/               unit/verification tests (identity vs classical HWCM matrices, symmetry,
                      mass, energy decay, exact-field checks, DCT == eigenbasis)
 experiments/run_all.py     every table/figure: E1 verification/cost, E2 elasticity (Dirichlet),
@@ -39,7 +40,8 @@ experiments/run_all.py     every table/figure: E1 verification/cost, E2 elastici
                            CG+FDM solvers), E11 spectrum on random graded grids, E12 FDM vs Bartels-Stewart,
                            E13 Q2 with AMG (needs `pip install pyamg`), E14 3D accuracy,
                            E15 stabilization study (staged), E16 adaptivity vs oracle, E17 adversarial grids
-                           and safeguard cost, env (machine/timing metadata), E6 timing
+                           and safeguard cost, E18 local refinement by composite patches,
+                           env (machine/timing metadata), E6 timing
 requirements.txt / requirements-gpu.txt   dependencies (GPU file adds CuPy)
 experiments/make_tables.py LaTeX tables generated from results/*.json
 paper/manuscript_jsc.tex   Journal of Scientific Computing version (Springer svjour3, smallextended):
@@ -47,6 +49,12 @@ paper/manuscript_jsc.tex   Journal of Scientific Computing version (Springer svj
                            `python paper/tools/make_supplement_jsc.py`
 paper/submission_jsc/      self-contained JSC submission (tables inlined, figures and svjour3 class
                            files included): `python paper/tools/make_submission_jsc.py`
+paper/manuscript_eabe.tex  Engineering Analysis with Boundary Elements version (elsarticle; proofs in
+                           Part A of supplementary_eabe.tex): `python paper/tools/make_eabe.py`, supplement by
+                           `python paper/tools/make_supplement_eabe.py`
+paper/submission_eabe/     self-contained EABE submission with highlights and cover letter:
+                           `python paper/tools/make_submission_eabe.py`
+paper/tools/paper_body.py  revised body shared by the JSC and EABE versions
 paper/manuscript.tex       full version (theorems + appendix proofs)
 paper/manuscript_lean.tex  lean engineering version (no proofs; uses the supplement)
 paper/supplementary.tex    Supplementary Material (proofs: Part A; tables S1-S15: Part B),
@@ -65,6 +73,8 @@ python experiments/make_tables.py
 python experiments/make_figures.py      # individual figure panels -> figures/panels/
 python paper/tools/make_jsc.py && python paper/tools/make_supplement_jsc.py && python paper/tools/make_submission_jsc.py
 cd paper/submission_jsc && latexmk -pdf manuscript.tex supplementary.tex      # Journal of Scientific Computing
+python paper/tools/make_supplement.py && python paper/tools/make_eabe.py && python paper/tools/make_supplement_eabe.py && python paper/tools/make_submission_eabe.py
+cd paper/submission_eabe && latexmk -pdf manuscript.tex supplementary.tex     # Engineering Analysis with Boundary Elements
 # other versions (need elsarticle.cls): python paper/tools/make_supplement.py, then latexmk in paper/
 ```
 

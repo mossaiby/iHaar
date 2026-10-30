@@ -1,0 +1,29 @@
+\textit{(a) Fixed patch grid $n=32$, increasing number of levels}\\[2pt]
+\begin{tabular}{rr rcr rcrr}
+\toprule
+ & & \multicolumn{3}{c}{graded tensor grid} & \multicolumn{4}{c}{composite patches}\\
+\cmidrule(lr){3-5}\cmidrule(lr){6-9}
+$n$ & $L$ & unknowns & $H^1$ error & time (s) & unknowns & $H^1$ error & time (s) & sweeps\\
+\midrule
+32 & 2 & 4096 & $4.65{\times}10^{-3}$ & 0.01 & 3072 & $4.65{\times}10^{-3}$ & 0.03 & 5\\
+32 & 4 & 9216 & $1.85{\times}10^{-3}$ & 0.02 & 5120 & $1.85{\times}10^{-3}$ & 0.06 & 5\\
+32 & 6 & 16384 & $7.33{\times}10^{-4}$ & 0.12 & 7168 & $7.34{\times}10^{-4}$ & 0.10 & 5\\
+32 & 8 & 25600 & $2.92{\times}10^{-4}$ & 0.16 & 9216 & $2.94{\times}10^{-4}$ & 0.11 & 5\\
+32 & 10 & 36864 & $1.19{\times}10^{-4}$ & 0.20 & 11264 & $1.23{\times}10^{-4}$ & 0.14 & 5\\
+\bottomrule
+\end{tabular}
+
+\medskip
+\textit{(b) Balanced refinement, $L=2\log_2n$; fitted rates: composite -0.89, graded tensor -0.79, uniform -0.33}\\[2pt]
+\begin{tabular}{rr rcr rcrr}
+\toprule
+ & & \multicolumn{3}{c}{graded tensor grid} & \multicolumn{4}{c}{composite patches}\\
+\cmidrule(lr){3-5}\cmidrule(lr){6-9}
+$n$ & $L$ & unknowns & $H^1$ error & time (s) & unknowns & $H^1$ error & time (s) & sweeps\\
+\midrule
+8 & 6 & 1024 & $1.90{\times}10^{-3}$ & 0.00 & 448 & $2.11{\times}10^{-3}$ & 0.04 & 4\\
+16 & 8 & 6400 & $4.76{\times}10^{-4}$ & 0.01 & 2304 & $4.98{\times}10^{-4}$ & 0.08 & 5\\
+32 & 10 & 36864 & $1.19{\times}10^{-4}$ & 0.19 & 11264 & $1.23{\times}10^{-4}$ & 0.15 & 5\\
+64 & 12 & 200704 & $2.98{\times}10^{-5}$ & 1.51 & 53248 & $3.04{\times}10^{-5}$ & 0.39 & 5\\
+\bottomrule
+\end{tabular}

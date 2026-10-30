@@ -226,6 +226,156 @@ def cahn_hilliard_3d():
         save(fig, f"ch3d_slice{k}")
 
 
+# ----------------------------------------------------------------------------- method pipeline (schematic)
+def pipeline():
+    from matplotlib.patches import FancyBboxPatch
+    fig, ax = plt.subplots(figsize=(2 * W1 + 0.6, 1.55)); ax.set_xlim(-0.15, 10.15); ax.set_ylim(0, 3.1); ax.axis("off")
+    def box(x, y, w, h, txt, fc):
+        ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.04,rounding_size=0.12", fc=fc, ec="0.3", lw=0.7))
+        ax.text(x + w / 2, y + h / 2, txt, ha="center", va="center", fontsize=6.6, linespacing=1.25)
+    def arrow(x0, x1, y):
+        ax.annotate("", xy=(x1, y), xytext=(x0, y), arrowprops=dict(arrowstyle="-|>", lw=0.8, color="0.25"))
+    y, h = 1.75, 1.15
+    box(0.0, y, 1.9, h, "1D grids\n$t_0<\\dots<t_N$\n(any grading)", "#e8eef7")
+    box(2.45, y, 2.15, h, "tridiagonal $A$, $L$\n$D_2=A^{-1}L$\n(Algorithm 1)", "#e8eef7")
+    box(5.15, y, 2.05, h, "eigenvectors $V$\nreal spectrum\n(Theorem 1)", "#fdf0d5")
+    box(7.75, y, 2.25, h, "tensor solve:\n$V_x\\,(\\hat F/\\Lambda)\\,V_y^{T}$\nmatrix products", "#e3f1e3")
+    for a, b in ((1.9, 2.45), (4.6, 5.15), (7.2, 7.75)): arrow(a + 0.03, b - 0.03, y + h / 2)
+    box(0.0, 0.1, 4.6, 1.15, "classical HWCM:\ndense $N^2\\times N^2$ system, $O(N^6)$ work", "#f6e0e0")
+    box(5.15, 0.1, 4.85, 1.15, "this work:\n$O(N^3)$ work in 2D, on any graded grid", "#e3f1e3")
+    save(fig, "pipeline")
+
+
+# ----------------------------------------------------------------------------- spectrum on a graded grid
+def spectrum_graded():
+    from ihaar.core import Grid1D
+    rng = np.random.default_rng(3); N = 48
+    h = np.exp(rng.uniform(np.log(1e-3), 0, N)); t = np.r_[0, np.cumsum(h)] / h.sum()
+    fig, ax = plt.subplots(figsize=(W1, H1))
+    c = 0.5 * (t[:-1] + t[1:]); ax.semilogy(c, np.diff(t), ".", color="tab:blue")
+    ax.set_xlabel("$x$"); ax.set_ylabel("cell size $h_k$"); ax.grid(alpha=0.25)
+    save(fig, "spec_grid")
+    fig, ax = plt.subplots(figsize=(W1, H1))
+    for bc, mk, lab in (("D", "o", "values prescribed"), ("N", "x", "zero slopes")):
+        lam = np.linalg.eigvals(Grid1D(t, bc).D2)
+        lr = np.sort(-lam.real); lr = lr[lr > 1e-9 * lr.max()]
+        ax.semilogy(np.arange(1, lr.size + 1), lr, mk, ms=3, mfc="none", label=lab + " (max $|\\mathrm{Im}\\,\\lambda|/|\\lambda|=%s$)"
+                    % ("0" if np.abs(lam.imag).max() == 0 else "%.0e" % (np.abs(lam.imag).max() / np.abs(lam).max())))
+    ax.set_xlabel("index"); ax.set_ylabel(r"$-\lambda_k$ (all real)"); ax.grid(alpha=0.25)
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.24), frameon=False)
+    save(fig, "spec_eigs")
+
+
+# ----------------------------------------------------------------------------- verification and solver cost
+def verification_cost():
+    E1 = R("E1"); d, n, c = E1["dirichlet"], E1["neumann"], E1["cost"]
+    fig, ax = plt.subplots(figsize=(W1, H1))
+    N = np.array([r["N"] for r in d], float)
+    ax.loglog(N, [r["uniform"] for r in d], "o-", label=r"$-\Delta u=f$, uniform")
+    ax.loglog(N, [r["graded"] for r in d], "s-", label=r"$-\Delta u=f$, Chebyshev-graded")
+    Nn = np.array([r["N"] for r in n], float)
+    ax.loglog(Nn, [r["order2"] for r in n], "^-", label=r"$(I-\Delta)u=f$, $D_2$")
+    ax.loglog(Nn, [r["order4"] for r in n], "v-", label=r"$(I-\Delta)u=f$, $D_2^{(4)}$")
+    ax.loglog(N, 0.5 * d[0]["uniform"] * (N / N[0]) ** -2, "k--", lw=0.7, label="slope $-2$")
+    ax.loglog(Nn, 0.3 * n[0]["order4"] * (Nn / Nn[0]) ** -4, "k-.", lw=0.7, label="slope $-4$")
+    ax.set_xlabel("cells per direction $N$"); ax.set_ylabel("maximum nodal error"); ax.grid(alpha=0.25)
+    ax.xaxis.set_minor_formatter(NullFormatter())
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.24), ncol=2, frameon=False)
+    save(fig, "verification")
+    fig, ax = plt.subplots(figsize=(W1, H1))
+    dof = lambda k: [r["dofs"] for r in c if r.get(k) is not None]
+    ax.loglog(dof("dense"), [r["dense"] for r in c if r.get("dense") is not None], "o-", label="dense HWCM solve")
+    ax.loglog(dof("bartels_stewart"), [r["bartels_stewart"] for r in c], "s-", label="Bartels--Stewart")
+    ax.loglog(dof("fdm_setup"), [r["fdm_setup"] + r["fdm_gemm"] for r in c], "^-", label="fast diag. (setup + solve)")
+    ax.loglog(dof("fdm_gemm"), [r["fdm_gemm"] for r in c], "v-", label="fast diag. (solve only)")
+    ax.loglog(dof("dct"), [r["dct"] for r in c], "d-", label="cosine transform")
+    loglog_dofs(ax); ax.set_ylabel("time (s)")
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.24), ncol=2, frameon=False)
+    save(fig, "cost")
+
+
+# ----------------------------------------------------------------------------- elasticity: stress field on the adapted grid
+def elasticity_fields():
+    from ihaar.elasticity_bc import ElasticityMixed
+    from ihaar.elasticity import WilliamsField
+    from matplotlib.colors import LogNorm
+    tx, ty = map(np.array, R("E7")["grids"]["12"]); fld = WilliamsField(apex=(0.0, 1.0))
+    el = ElasticityMixed(tx, ty, {"T": "T"}); Ue, Ve, _, _ = el.solve(fld)
+    def fields(xs, ys):
+        Ex, Edx = el.ex.g.eval_matrices(xs); Ey, Edy = el.ey.g.eval_matrices(ys)
+        ux, uy = Edx @ Ue @ Ey.T, Ex @ Ue @ Edy.T; vx, vy = Edx @ Ve @ Ey.T, Ex @ Ve @ Edy.T
+        sxx, syy, sxy = el.stresses(ux, uy, vx, vy); szz = el.lmb * (ux + vy)
+        vm = np.sqrt(0.5 * ((sxx - syy) ** 2 + (syy - szz) ** 2 + (szz - sxx) ** 2) + 3 * sxy ** 2)
+        return Ex @ Ue @ Ey.T, Ex @ Ve @ Ey.T, vm
+    for name, (x0, x1, y0, y1), grid in (("el_vm", (0, 1, 0, 1), False), ("el_vm_zoom", (0, 0.05, 0.95, 1.0), True)):
+        xs = np.geomspace(1e-5, 1, 400) * (x1 - x0) + x0; ys = y1 - np.geomspace(1e-5, 1, 400)[::-1] * (y1 - y0)
+        _, _, vm = fields(xs, ys)
+        fig, ax = plt.subplots(figsize=(H1 + 0.35, H1))
+        lev = np.geomspace(np.percentile(vm, 1), vm.max(), 15)
+        im = ax.contourf(xs, ys, vm.T, levels=lev, cmap="viridis", norm=LogNorm(), extend="min")
+        ax.contour(xs, ys, vm.T, levels=lev[::2], colors="k", linewidths=0.25, alpha=0.5)
+        if grid:
+            for xv in tx[(tx >= x0) & (tx <= x1)]: ax.axvline(xv, lw=0.25, color="0.85", alpha=0.5)
+            for yv in ty[(ty >= y0) & (ty <= y1)]: ax.axhline(yv, lw=0.25, color="0.85", alpha=0.5)
+        ax.plot([x0, x1], [1, 1], color="tab:red", lw=2.0, clip_on=False)
+        ax.plot([0], [1], marker="*", color="tab:red", ms=8, clip_on=False, zorder=4, markeredgecolor="k", markeredgewidth=0.4)
+        ax.set_xlim(x0, x1); ax.set_ylim(y0, y1); ax.set_aspect("equal"); ax.set_xlabel("$x$"); ax.set_ylabel("$y$")
+        if grid: ax.set_xticks([0, 0.025, 0.05]); ax.set_yticks([0.95, 0.975, 1.0])
+        cb = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04, ticks=LogLocator()); cb.set_label(r"von Mises stress")
+        save(fig, name)
+    # stress along the line x = y - 1 (45 degrees into the body) versus distance to the singular point
+    r = np.geomspace(1e-5, 0.7, 120); xs, ys = r / np.sqrt(2), 1 - r / np.sqrt(2)
+    vm = np.array([fields(np.array([a]), np.array([b]))[2][0, 0] for a, b in zip(xs, ys)])
+    ux, uy, vx, vy = fld.grad(xs, ys); sxx, syy, sxy = el.stresses(ux, uy, vx, vy); szz = el.lmb * (ux + vy)
+    vme = np.sqrt(0.5 * ((sxx - syy) ** 2 + (syy - szz) ** 2 + (szz - sxx) ** 2) + 3 * sxy ** 2)
+    fig, ax = plt.subplots(figsize=(W1, H1))
+    ax.loglog(r, vme, "k-", lw=0.8, label="exact")
+    ax.loglog(r[::4], vm[::4], "o", mfc="none", label="collocation, adapted grid")
+    hmin = min(np.diff(tx).min(), np.diff(ty).min()); ax.axvline(hmin, ls=":", color="0.5", lw=0.8)
+    ax.text(hmin * 1.3, vme.max() * 0.5, "smallest cell", fontsize=6, color="0.4")
+    ax.set_xlabel("distance to the singular point"); ax.set_ylabel("von Mises stress"); ax.grid(alpha=0.25)
+    ax.xaxis.set_minor_formatter(NullFormatter()); ax.legend(loc="upper right", frameon=False)
+    save(fig, "el_vm_line")
+
+
+# ----------------------------------------------------------------------------- local refinement with composite patches
+def local_refinement():
+    E18 = R("E18")
+    fig, ax = plt.subplots(figsize=(H1, H1)); n, L = 8, 4
+    cols = plt.cm.viridis(np.linspace(0.15, 0.85, L + 1))
+    for k in range(L + 1):
+        b = 2.0 ** -k; t = np.linspace(0, b, n + 1)
+        for v in t:
+            ax.plot([v, v], [0, b], color=cols[k], lw=0.5); ax.plot([0, b], [v, v], color=cols[k], lw=0.5)
+        ax.plot([0, b, b], [b, b, 0], color=cols[k], lw=1.2)
+    ax.plot([0], [0], marker="*", color="tab:red", ms=8, markeredgecolor="k", markeredgewidth=0.4, clip_on=False, zorder=5)
+    ax.set_aspect("equal"); ax.set_xlim(0, 1); ax.set_ylim(0, 1); ax.set_xlabel("$x$"); ax.set_ylabel("$y$")
+    save(fig, "local_patches")
+    fig, ax = plt.subplots(figsize=(W1, H1)); B, U = E18["balanced"], E18["uniform"]
+    ax.plot([r["dofs"] for r in U], [r["e"] for r in U], "o-", label="uniform (%.2f)" % E18["rate_uniform"])
+    ax.plot([r["tensor_dofs"] for r in B], [r["tensor_e"] for r in B], "s-", label="graded tensor grid (%.2f)" % E18["rate_tensor"])
+    ax.plot([r["comp_dofs"] for r in B], [r["comp_e"] for r in B], "^-", label="composite patches (%.2f)" % E18["rate_comp"])
+    loglog_dofs(ax); ax.set_ylabel(r"relative $H^1$ error")
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.24), frameon=False)
+    save(fig, "local_error")
+
+
+# ----------------------------------------------------------------------------- Allen-Cahn shrinking circle
+def allen_cahn_circle():
+    E3 = R("E3"); eps, R0 = E3["eps"], E3["R0"]
+    lab = {"N64_o2": "$64^2$, $D_2$", "N64_o4": "$64^2$, $D_2^{(4)}$", "N128_o4": "$128^2$, $D_2^{(4)}$", "N256_o4": "$256^2$, $D_2^{(4)}$"}
+    fig, ax = plt.subplots(figsize=(W1, H1))
+    for k, r in E3["runs"].items(): ax.plot(r["t"], r["R2"], ".-", ms=2, label=lab.get(k, k))
+    t = np.array(E3["runs"]["N256_o4"]["t"]); ax.plot(t, R0 ** 2 - 2 * eps ** 2 * t, "k--", lw=0.7, label=r"$R_0^2-2\varepsilon^2t$")
+    ax.set_xlabel("$t$"); ax.set_ylabel("$R^2$"); ax.grid(alpha=0.25); ax.legend(loc="upper right", frameon=False)
+    save(fig, "ac_radius")
+    fig, ax = plt.subplots(figsize=(W1, H1))
+    for k, r in E3["runs"].items(): ax.plot(r["t"], r["E"], ".-", ms=2, label=lab.get(k, k))
+    ax.set_xlabel("$t$"); ax.set_ylabel("discrete energy"); ax.grid(alpha=0.25); ax.legend(loc="upper right", frameon=False)
+    save(fig, "ac_energy")
+
+
 if __name__ == "__main__":
-    for f in (elasticity_traction, ihwc_vs_q2, interface_resolution, allen_cahn_star, cahn_hilliard_sharp, cahn_hilliard_3d):
+    for f in (elasticity_traction, ihwc_vs_q2, interface_resolution, allen_cahn_star, cahn_hilliard_sharp, cahn_hilliard_3d,
+              pipeline, spectrum_graded, verification_cost, elasticity_fields, local_refinement, allen_cahn_circle):
         f(); print("done:", f.__name__, flush=True)

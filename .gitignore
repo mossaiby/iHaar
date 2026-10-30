@@ -25,6 +25,8 @@ paper/*.pdf
 # compiled submission (the figure PDFs in this folder ARE needed and stay tracked)
 paper/submission_jsc/manuscript.pdf
 paper/submission_jsc/supplementary.pdf
+paper/submission_eabe/manuscript.pdf
+paper/submission_eabe/supplementary.pdf
 
 # Figure previews (PDF figures are tracked)
 figures/*.png

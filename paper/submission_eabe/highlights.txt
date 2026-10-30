@@ -1,0 +1,5 @@
+Haar wavelet collocation reduces to tridiagonal operators via an exact identity
+Real, simple spectrum proved on every grid: fast diagonalization always applies
+Mass-conserving phase-field solvers resolve interfaces with about four nodes
+Automatic refinement recovers optimal rates at elastic corner singularities
+Needs a quarter of the unknowns of biquadratic finite elements on equal grids

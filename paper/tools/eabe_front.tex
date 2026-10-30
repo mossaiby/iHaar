@@ -1,0 +1,191 @@
+\documentclass[preprint,12pt]{elsarticle}
+\usepackage{amsmath,amssymb,amsthm,amsfonts}
+\usepackage{stix}
+\usepackage{booktabs,graphicx,xcolor,float,array}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+\newtheorem{theorem}{Theorem}
+\newtheorem{result}{Result}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+\newfloat{algorithm}{tbp}{loa}
+\floatname{algorithm}{Algorithm}
+\newcommand{\todo}[1]{\textcolor{red}{\textbf{[TODO: #1]}}}
+
+\newcommand{\step}[1]{\par\noindent\hangindent=1.5em\hangafter=1\textbf{Step #1.}\ }
+\setlength{\emergencystretch}{2.5em}
+\newcommand{\repo}{\url{https://github.com/mossaiby/iHaar}}
+\newcommand{\archive}{\url{https://github.com/mossaiby/iHaar/releases/tag/v1.1}}
+\journal{Engineering Analysis with Boundary Elements}
+
+\begin{document}
+\begin{frontmatter}
+\title{Fast solvers on arbitrary grids for Haar wavelet collocation:
+sharp-interface phase-field computations and adaptive elastostatics}
+
+\author[inst1]{Farshid Mossaiby\corref{cor1}}
+\ead{mossaiby@eng.ui.ac.ir}
+\cortext[cor1]{Corresponding author}
+\affiliation[inst1]{organization={Department of Civil Engineering, University of Isfahan},
+            city={Isfahan}, postcode={81744-73441}, country={Iran}}
+
+\begin{abstract}
+The Haar wavelet collocation method (HWCM) is popular in engineering because it is easy to derive and
+to program. In two and three dimensions, however, it is usually solved through large dense matrices, and
+it is limited to second-order accuracy. We show that these limitations disappear when the method is
+written in terms of nodal values, where it becomes midpoint quadratic-spline collocation. An exact
+three-term relation turns the dense HWCM matrices into tridiagonal ones, and we prove that the resulting
+second-derivative operator has real, simple and nonpositive eigenvalues on every strictly increasing
+grid. Fast diagonalization, which reduces problems on tensor grids to a few dense matrix products, is
+therefore always well defined, including on adaptively refined grids. In floating-point arithmetic it
+was backward stable on random and adversarial grids, and an inexpensive check guards against failure. On uniform grids, a correction that costs nothing extra
+raises the accuracy to fourth order for zero-flux conditions. Building on this, we present Allen--Cahn
+and Cahn--Hilliard solvers that conserve mass exactly, satisfy a modified-energy law, and resolve
+interfaces with about four nodes across the transition layer. We also present a plane elastostatics
+solver for compressible materials with prescribed displacements and tractions, whose automatic
+refinement recovered the optimal convergence rate at the tested corner singularities. In a benchmark
+against biquadratic finite elements on identical grids, the method needed about a quarter of the
+unknowns. The code that reproduces every result is openly available.
+\end{abstract}
+
+\begin{keyword}
+Haar wavelet collocation \sep spline collocation \sep fast diagonalization \sep graded grids \sep Cahn--Hilliard \sep
+sharp interfaces \sep corner singularities \sep adaptive refinement
+\end{keyword}
+\end{frontmatter}
+
+%==========================================================================
+\section{Introduction}
+%==========================================================================
+The Haar wavelet collocation method (HWCM)~\cite{chen1997haar,lepik2005numerical,lepik2011solving,lepik2014book}
+is widely used in applied mechanics for beams, plates, shells and functionally graded
+structures~\cite{majak2015accuracy,majak2015convergence,majak2018higher}. The highest derivative of the
+unknown is expanded in Haar functions, the lower derivatives follow by exact integration, and the
+equation is enforced at cell midpoints. Higher-order variants~\cite{majak2018higher,ratas2021solving} and
+graded grids based on non-uniform Haar functions~\cite{dubeau2004nonuniform,lepik2008nonuniform,oruc2019nonuniform}
+are available. In two dimensions, however, all equations are usually assembled into one dense matrix of
+size $N^2\times N^2$, which becomes impractical beyond about $64\times64$ cells. Graded grids must be
+designed by hand, and for nonlinear time-dependent problems no stability results are available.
+
+In terms of nodal values, HWCM is midpoint quadratic-spline collocation
+(QSC)~\cite{houstis1988quadratic,christara1994quadratic,christara2006optimal}, and it uses the same
+functions as quadratic isogeometric collocation~\cite{auricchio2010isogeometric,schillinger2013isogeometric}.
+On tensor grids, separable problems can be solved by fast diagonalization~\cite{lynch1964direct}, which
+reduces two- and three-dimensional problems to dense matrix products and fast transforms that run
+efficiently on CPUs and GPUs. It requires each one-dimensional operator to be diagonalizable with real
+eigenvalues. For
+symmetric finite-element and isogeometric Galerkin operators this is automatic~\cite{sangalli2016isogeometric}.
+Collocation operators are generally not symmetric, and for them the property has to be proved. For
+Hermite-cubic orthogonal spline collocation it is known~\cite{dyksen1987tensor,sun1999spectral}, and it
+underlies the matrix decomposition algorithms of Bialecki and Fairweather~\cite{bialecki1995matrix,bialecki2011matrix}.
+For QSC, fast solvers exist on uniform grids~\cite{christara2002fast}. To our knowledge, the property has
+not been established for midpoint QSC, equivalently nodal HWCM, on arbitrary graded grids. There, the
+collocation operator is not symmetric and is not symmetrized by quadrature weights, so a different
+argument is needed. Without a guarantee, fast diagonalization on adaptively refined grids could fail.
+
+This paper closes that gap and builds on it. Our central result (Theorem~\ref{thm:spectrum}) is that, on
+every grid, the HWCM second-derivative operator has real, distinct and nonpositive eigenvalues, so the
+fast solver always applies. We check its numerical reliability (Section~\ref{sec:robust}) and use it in
+three engineering settings: fast solution on arbitrary graded grids, Allen--Cahn and Cahn--Hilliard
+computations with thin interfaces, which conserve mass exactly, and elastostatics of compressible
+materials with traction boundaries and automatic, including local, refinement at corner singularities.
+Table~\ref{tab:closest} compares the method with the closest existing approaches. The main text keeps
+the mathematics to what is needed to use the method; derivations are in the appendices, and formal
+statements and proofs in Part~A of the Supplementary Material. The code is available at \repo.
+
+\begin{table}[t]\centering\footnotesize
+\caption{Comparison with the closest spline-collocation approaches, to the best of our knowledge. ``Spectrum'' refers to the one-dimensional collocation operator used by fast diagonalization or matrix decomposition.}\label{tab:closest}
+\begin{tabular}{p{0.14\textwidth}p{0.175\textwidth}p{0.13\textwidth}p{0.23\textwidth}p{0.17\textwidth}}
+\toprule
+Method & Trial space and collocation points & Grids & Spectrum & Fast solver\\
+\midrule
+Classical HWCM~\cite{lepik2011solving,oruc2019nonuniform} & integrated Haar ($C^1$ quadratics); midpoints & uniform or a~priori graded & not analysed & none (dense $N^2\times N^2$ solve)\\
+Hermite-cubic OSC~\cite{dyksen1987tensor,sun1999spectral,bialecki1995matrix} & $C^1$ cubics; two Gauss points per cell & partitions as in the cited works & real, distinct eigenvalues established & matrix decomposition (MDA), FFT on uniform grids\\
+QSC~\cite{houstis1988quadratic,christara2002fast,christara2006optimal} & $C^1$ quadratics; midpoints (optimal variants perturbed) & uniform; non-uniform analysed for convergence & symmetric with trigonometric eigenvectors on uniform grids & FFT and MDA on uniform grids\\
+Quadratic IGA collocation~\cite{auricchio2010isogeometric,schillinger2013isogeometric,delorenzis2015isogeometric} & B-splines; Greville or superconvergent points & arbitrary knots; local refinement & not established for collocation; Galerkin pencils symmetric~\cite{sangalli2016isogeometric} & direct or Krylov; FDM for the Galerkin counterpart\\
+This work & $C^1$ quadratics; midpoints & arbitrary graded tensor grids & real, simple, nonpositive on every grid (Result~\ref{thm:spectrum}) & FDM on any tensor grid, with a safeguard; DCT/DST on uniform grids\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%==========================================================================
+\section{The method}\label{sec:method}
+%==========================================================================
+\subsection{From Haar wavelets to nodal values}
+Let $a=t_0<t_1<\dots<t_N=b$ be the grid, with cells of width $h_k$ and midpoints $m_k$. HWCM expands
+$u''$ in Haar functions and integrates twice. On a given grid, the Haar functions span exactly the
+functions that are constant on each cell, so the Haar coefficients carry the same information as the
+cell values $c_k$ of $u''$. Integrating twice gives piecewise quadratics with continuous slopes, that is,
+quadratic splines. We use the values $U_k$ at the cell midpoints, which are the HWCM collocation values,
+as unknowns.
+
+The key observation is that the nodal values and the cell values of $u''$ are linked by an exact
+three-term relation, derived in~\ref{app:identity}:
+\begin{equation}\label{eq:identity}
+LU+b=Ac,
+\end{equation}
+where $L$ is a tridiagonal difference matrix, $A$ a tridiagonal averaging matrix, and $b$ contains the
+prescribed end values. The second derivative at the nodes is therefore $c=D_2U+e$, with $D_2=A^{-1}L$
+and a boundary vector $e$. Instead of the dense integration matrices of classical HWCM, only two
+tridiagonal matrices need to be assembled. Slopes follow in closed form as well, which gives the
+first-derivative matrix $D_1$ and the end slopes needed for traction conditions (Algorithm~1).
+Fig.~\ref{fig:pipeline} summarizes how these one-dimensional operators lead to the fast solvers of
+Section~\ref{sec:tensor}.
+
+\begin{algorithm}[t]\small\hrule\smallskip
+\noindent\textbf{Algorithm 1: one-dimensional operators} (\texttt{ihaar/core.py}, class \texttt{Grid1D}).
+Input: knots $t_0<\dots<t_N$ and the type of each end (value prescribed, or zero slope).
+\step{1} Compute the cell widths and midpoints, and assemble the tridiagonal matrices $L$ and $A$ (\ref{app:identity}).
+\step{2} Factorize $A$ (tridiagonal LU) and form $D_2=A^{-1}L$ and the boundary vectors $e_i=A^{-1}b_i$.
+\step{3} Form the first-derivative matrix $D_1$ by summing the cell values of $u''$ along the grid~\eqref{eq:D1}.
+\step{4} Form the end slopes $s'(a)$ and $s'(b)$ as row vectors, for traction conditions.
+\smallskip\hrule
+\end{algorithm}
+
+\begin{figure}[t]\centering
+\includegraphics[width=0.95\textwidth]{../figures/panels/pipeline.pdf}
+\caption{From the grid to the solution. The one-dimensional operators are assembled from two tridiagonal
+matrices; Theorem~\ref{thm:spectrum} guarantees a real eigendecomposition on any grid, and the
+multidimensional problem is then solved by dense matrix products instead of one dense system.}\label{fig:pipeline}
+\end{figure}
+
+\subsection{Main result: the fast solver always works}
+\begin{theorem}[Spectrum on every grid]\label{thm:spectrum}
+On every strictly increasing grid, and whether a value or a zero slope is prescribed at each end, the
+second-derivative matrix $D_2=A^{-1}L$ has real, distinct and nonpositive eigenvalues. It therefore has a
+real eigenvector matrix $V$, and fast diagonalization is well defined.
+\end{theorem}
+
+In plain terms: whatever grid the user or the refinement algorithm produces, the fast solver of
+Section~\ref{sec:tensor} can be used, without complex arithmetic and without restrictions such as a bounded
+ratio between neighbouring cells. On uniform grids $D_2$ is symmetric, and the result is easy. On graded
+grids $D_2$ is not symmetric, and the proof (Result~2 in the Supplementary Material) uses the theory of
+oscillation matrices, developed by Gantmacher and Krein for vibrating mechanical
+systems~\cite{gantmacher2002oscillation}. Fig.~\ref{fig:spectrum} illustrates the result on a grid whose
+cells differ in size by three orders of magnitude in random order. The theorem says that the solver is
+\emph{defined}; whether it is also \emph{accurate} in floating-point arithmetic is checked separately in
+Section~\ref{sec:robust}.
+
+\begin{figure}[t]\centering
+\begin{tabular}{@{}cc@{}}
+\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/spec_grid.pdf}\\[-1pt]\small (a)\end{tabular} &
+\begin{tabular}{@{}c@{}}\includegraphics{../figures/panels/spec_eigs.pdf}\\[-1pt]\small (b)\end{tabular}\\
+\end{tabular}
+\caption{Theorem~\ref{thm:spectrum} on a strongly non-uniform grid ($N=48$). (a) Cell sizes, spanning three
+orders of magnitude in random order. (b) Eigenvalues of $D_2$ for both types of end condition: all are
+real (to machine precision), distinct and nonpositive.}\label{fig:spectrum}
+\end{figure}
+
+\subsection{Uniform grids: cosine transforms, fourth order and mass conservation}
+On a uniform grid, $D_2$ is symmetric and is diagonalized by the discrete sine transform (prescribed
+values) or cosine transform (zero slopes), so the eigenvectors need not be stored. The corrected operator
+\begin{equation}\label{eq:D24}
+D_2^{(4)}=D_2+\tfrac{h^2}{24}D_2^2
+\end{equation}
+has the same eigenvectors and is fourth-order accurate for zero-flux and periodic problems; with general
+prescribed values, the order remains two. The correction costs nothing, because in the transform domain it
+only changes the eigenvalues. Plain HWCM has half the error constant of the three-point difference, so it
+is about twice as accurate on the same grid. Finally, with zero slopes at both ends the weighted sum
+$\sum_kh_kU_k$ is conserved exactly by $D_2$ on any grid, which gives exact mass conservation for the
+Cahn--Hilliard equation. Formal statements and proofs of these properties are Results~3 and~4 of the
+Supplementary Material.
+

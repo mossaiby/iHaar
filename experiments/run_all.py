@@ -1010,6 +1010,41 @@ def E16():
 
 
 # ---------------------------------------------------------------------------
+# E18: local refinement by nested composite patches (Poisson, corner singularity)
+# ---------------------------------------------------------------------------
+def E18():
+    from ihaar.composite import CompositePoisson, poisson_tensor, corner_knots, h1_error
+    def u(x, y):
+        r, th = np.hypot(x, y), np.arctan2(y, x); return r ** (2 / 3) * np.sin(2 * th / 3)
+    def grad(x, y):
+        r = np.hypot(x, y) + 1e-300; th = np.arctan2(y, x)
+        ur, ut = (2 / 3) * r ** (-1 / 3) * np.sin(2 * th / 3), (2 / 3) * r ** (-1 / 3) * np.cos(2 * th / 3)
+        return ur * np.cos(th) - ut * np.sin(th), ur * np.sin(th) + ut * np.cos(th)
+    def pair(n, L):
+        t = corner_knots(n, L)
+        t0 = time.perf_counter(); pt = poisson_tensor(t, t, u); tt = time.perf_counter() - t0
+        t0 = time.perf_counter(); cp = CompositePoisson(n, L, u); hist = cp.solve(); tc = time.perf_counter() - t0
+        return dict(n=n, L=L, tensor_dofs=(t.size - 1) ** 2, tensor_e=h1_error([pt], grad), tensor_t=tt,
+                    comp_dofs=cp.dofs, comp_e=cp.h1_error(grad), comp_t=tc, sweeps=len(hist), last_update=hist[-1])
+    out = {"levels": [pair(32, L) for L in (2, 4, 6, 8, 10)],
+           # balanced refinement: corner error (2^-L/n)^(2/3) ~ smooth error n^-2  =>  L = 2 log2 n
+           "balanced": [pair(n, int(2 * np.log2(n))) for n in (8, 16, 32, 64)],
+           "uniform": []}
+    for N in (32, 64, 128, 256, 512):
+        t = np.linspace(0, 1, N + 1); out["uniform"].append(dict(N=N, dofs=N * N, e=h1_error([poisson_tensor(t, t, u)], grad)))
+    fit = lambda d, e: float(np.polyfit(np.log(d), np.log(e), 1)[0])
+    B = out["balanced"]
+    out["rate_comp"] = fit([r["comp_dofs"] for r in B], [r["comp_e"] for r in B])
+    out["rate_tensor"] = fit([r["tensor_dofs"] for r in B], [r["tensor_e"] for r in B])
+    out["rate_uniform"] = fit([r["dofs"] for r in out["uniform"]], [r["e"] for r in out["uniform"]])
+    save("E18", out)
+    for r in out["levels"] + B:
+        print("E18 n=%d L=%d tensor %d %.3e %.2fs | composite %d %.3e %.2fs sweeps %d" % (
+            r["n"], r["L"], r["tensor_dofs"], r["tensor_e"], r["tensor_t"], r["comp_dofs"], r["comp_e"], r["comp_t"], r["sweeps"]))
+    print("E18 rates: composite %.2f tensor %.2f uniform %.2f" % (out["rate_comp"], out["rate_tensor"], out["rate_uniform"]))
+
+
+# ---------------------------------------------------------------------------
 # E17: adversarial grids, safeguard and fallback cost
 # ---------------------------------------------------------------------------
 def E17():
@@ -1098,7 +1133,7 @@ def E6(gpu=False):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("--only", default="env,E1,E2,E3,E4,E5,E7,E7b,E8a,E8b,E8c,E8d,E8fig,E9,E10,E11,E12,E14,E15_init_0.004_384,E15_ref_0.004_384,E15_dt1_0.004_384,E15_dt8_0.004_384,E15_dt32_0.004_384,E16,E17,E13,E6")
+    ap.add_argument("--only", default="env,E1,E2,E3,E4,E5,E7,E7b,E8a,E8b,E8c,E8d,E8fig,E9,E10,E11,E12,E14,E15_init_0.004_384,E15_ref_0.004_384,E15_dt1_0.004_384,E15_dt8_0.004_384,E15_dt32_0.004_384,E16,E17,E18,E13,E6")
     ap.add_argument("--gpu", action="store_true")
     a = ap.parse_args()
     for name in a.only.split(","):

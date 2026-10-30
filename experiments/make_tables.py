@@ -215,6 +215,15 @@ if have("E17"):
                              part("(b) Normwise backward errors and relative difference of the two solutions", bot)))
     w("t_fallback", tab("r ccc", "$N$ & FDM with check (s) & Bartels--Stewart (s) & ratio",
                         [f"{c['N']} & {c['fdm_with_check']:.4f} & {c['bartels_stewart']:.4f} & {c['ratio']:.1f}" for c in E17["cost"]]))
+if have("E18"):
+    E18 = R("E18")
+    row = lambda r: (f"{r['n']} & {r['L']} & {r['tensor_dofs']} & {sci(r['tensor_e'])} & {r['tensor_t']:.2f} & "
+                     f"{r['comp_dofs']} & {sci(r['comp_e'])} & {r['comp_t']:.2f} & {r['sweeps']}")
+    head = (" & & \\multicolumn{3}{c}{graded tensor grid} & \\multicolumn{4}{c}{composite patches}\\\\\n"
+            "\\cmidrule(lr){3-5}\\cmidrule(lr){6-9}\n$n$ & $L$ & unknowns & $H^1$ error & time (s) & unknowns & $H^1$ error & time (s) & sweeps")
+    w("t_local", stack(part("(a) Fixed patch grid $n=32$, increasing number of levels", tab("rr rcr rcrr", head, [row(r) for r in E18["levels"]])),
+                       part("(b) Balanced refinement, $L=2\\log_2n$; fitted rates: composite %.2f, graded tensor %.2f, uniform %.2f"
+                            % (E18["rate_comp"], E18["rate_tensor"], E18["rate_uniform"]), tab("rr rcr rcrr", head, [row(r) for r in E18["balanced"]]))))
 if have("E14"):
     E14 = R("E14")
     def r3(g):

@@ -1,0 +1,202 @@
+\begin{table}[htbp]\centering\small
+\caption{Computing environment and timing protocol.}
+\begin{tabular}{p{0.22\textwidth}p{0.70\textwidth}}
+\toprule
+item & value\\
+\midrule
+CPU & AMD Ryzen 7 5800U (8 cores, 16 threads, 1.90 GHz base clock)\\
+operating system & Windows 10\\
+software & Python 3.11.9, NumPy 2.4.6, SciPy 1.17.1\\
+BLAS/LAPACK & scipy-openblas 0.3.31.188.0\\
+threads & 16 logical CPUs; BLAS threading: default\\
+memory & 16 GB\\
+GPU (Table~S26) & NVIDIA GeForce RTX 3050 Ti Laptop GPU (4 GB)\\
+timing protocol & wall-clock time (\texttt{time.perf\_counter}); solve times are medians of 3 to 5 repetitions; setup and assembly are reported separately and are not amortized\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]\centering\small
+\caption{Maximum nodal error and observed convergence rates for two model problems.}
+\textit{(a) Prescribed values, $-\Delta u=f$, operator $D_2$}\\[2pt]
+\begin{tabular}{r cc cc}
+\toprule
+& \multicolumn{2}{c}{uniform grid} & \multicolumn{2}{c}{Chebyshev-graded grid}\\
+$N$ & error & rate & error & rate\\
+\midrule
+8 & $6.50{\times}10^{-3}$ & -- & $3.96{\times}10^{-3}$ & --\\
+16 & $1.66{\times}10^{-3}$ & 1.97 & $1.15{\times}10^{-3}$ & 1.79\\
+32 & $4.18{\times}10^{-4}$ & 1.99 & $2.96{\times}10^{-4}$ & 1.95\\
+64 & $1.05{\times}10^{-4}$ & 2.00 & $7.46{\times}10^{-5}$ & 1.99\\
+128 & $2.61{\times}10^{-5}$ & 2.00 & $1.87{\times}10^{-5}$ & 2.00\\
+256 & $6.54{\times}10^{-6}$ & 2.00 & $4.67{\times}10^{-6}$ & 2.00\\
+512 & $1.63{\times}10^{-6}$ & 2.00 & $1.17{\times}10^{-6}$ & 2.00\\
+\bottomrule
+\end{tabular}
+
+\medskip
+\textit{(b) Zero-slope conditions, $(I-\Delta)u=f$, uniform grid}\\[2pt]
+\begin{tabular}{r cc cc}
+\toprule
+& \multicolumn{2}{c}{$D_2$} & \multicolumn{2}{c}{$D_2^{(4)}$}\\
+$N$ & error & rate & error & rate\\
+\midrule
+8 & $3.05{\times}10^{-2}$ & -- & $4.69{\times}10^{-3}$ & --\\
+16 & $9.11{\times}10^{-3}$ & 1.74 & $3.15{\times}10^{-4}$ & 3.89\\
+32 & $2.38{\times}10^{-3}$ & 1.94 & $2.01{\times}10^{-5}$ & 3.98\\
+64 & $6.01{\times}10^{-4}$ & 1.98 & $1.26{\times}10^{-6}$ & 3.99\\
+128 & $1.51{\times}10^{-4}$ & 2.00 & $7.87{\times}10^{-8}$ & 4.00\\
+256 & $3.77{\times}10^{-5}$ & 2.00 & $4.92{\times}10^{-9}$ & 4.00\\
+512 & $9.42{\times}10^{-6}$ & 2.00 & $3.08{\times}10^{-10}$ & 4.00\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]\centering\small
+\caption{Adversarial grid families ($N=256$): eigenvector conditioning $\kappa(V)$, condition estimate
+$\kappa_{\mathrm{Syl}}$ of the Sylvester problem, normwise backward errors of fast diagonalization (FDM) and
+Bartels--Stewart (B--S), and relative difference of the two solutions.}
+\textit{(a) Grid, eigenvector conditioning and condition estimate of the Sylvester problem}\\[2pt]
+\begin{tabular}{p{0.30\textwidth}c c c c}
+\toprule
+grid family ($N=256$) & ends & $h_{\max}/h_{\min}$ & $\kappa(V)$ & $\kappa_{\mathrm{Syl}}$\\
+\midrule
+alternating, ratio 10 & values & $1{\times}10^{1}$ & 2 & $3{\times}10^{6}$\\
+alternating, ratio 10 & slope & $1{\times}10^{1}$ & 2 & $2{\times}10^{7}$\\
+alternating, ratio 100 & values & $1{\times}10^{2}$ & 2 & $3{\times}10^{8}$\\
+alternating, ratio 100 & slope & $1{\times}10^{2}$ & 3 & $2{\times}10^{8}$\\
+alternating, ratio 1000 & values & $1{\times}10^{3}$ & 2 & $3{\times}10^{10}$\\
+alternating, ratio 1000 & slope & $1{\times}10^{3}$ & 3 & $2{\times}10^{9}$\\
+end cells $10^{-6}$ & values & $1{\times}10^{6}$ & 1 & $2{\times}10^{16}$\\
+end cells $10^{-6}$ & slope & $1{\times}10^{6}$ & 3 & $3{\times}10^{12}$\\
+geometric, $10^6$ & values & $1{\times}10^{6}$ & 9 & $2{\times}10^{16}$\\
+geometric, $10^6$ & slope & $1{\times}10^{6}$ & 47 & $9{\times}10^{18}$\\
+geometric, $10^{12}$ & values & $1{\times}10^{12}$ & 6 & $3{\times}10^{27}$\\
+geometric, $10^{12}$ & slope & $1{\times}10^{12}$ & 83 & $6{\times}10^{30}$\\
+random, unbounded & values & $9{\times}10^{5}$ & 13 & $2{\times}10^{16}$\\
+random, unbounded & slope & $9{\times}10^{5}$ & 15 & $2{\times}10^{16}$\\
+cluster of $10^{-4}$ cells & values & $1{\times}10^{4}$ & 40 & $5{\times}10^{15}$\\
+cluster of $10^{-4}$ cells & slope & $1{\times}10^{4}$ & 40 & $9{\times}10^{16}$\\
+\bottomrule
+\end{tabular}
+
+\medskip
+\textit{(b) Normwise backward errors and relative difference of the two solutions}\\[2pt]
+\begin{tabular}{p{0.30\textwidth}c ccc}
+\toprule
+grid family ($N=256$) & ends & FDM & B--S & difference\\
+\midrule
+alternating, ratio 10 & values & $4{\times}10^{-16}$ & $6{\times}10^{-16}$ & $2{\times}10^{-12}$\\
+alternating, ratio 10 & slope & $1{\times}10^{-15}$ & $2{\times}10^{-15}$ & $3{\times}10^{-10}$\\
+alternating, ratio 100 & values & $5{\times}10^{-17}$ & $6{\times}10^{-17}$ & $3{\times}10^{-11}$\\
+alternating, ratio 100 & slope & $1{\times}10^{-15}$ & $2{\times}10^{-15}$ & $3{\times}10^{-10}$\\
+alternating, ratio 1000 & values & $1{\times}10^{-17}$ & $6{\times}10^{-18}$ & $3{\times}10^{-10}$\\
+alternating, ratio 1000 & slope & $4{\times}10^{-15}$ & $2{\times}10^{-15}$ & $4{\times}10^{-9}$\\
+end cells $10^{-6}$ & values & $6{\times}10^{-16}$ & $2{\times}10^{-17}$ & $4{\times}10^{-1}$\\
+end cells $10^{-6}$ & slope & $7{\times}10^{-15}$ & $1{\times}10^{-16}$ & $6{\times}10^{-7}$\\
+geometric, $10^6$ & values & $5{\times}10^{-22}$ & $3{\times}10^{-22}$ & $3{\times}10^{-13}$\\
+geometric, $10^6$ & slope & $5{\times}10^{-17}$ & $5{\times}10^{-17}$ & $1{\times}10^{-7}$\\
+geometric, $10^{12}$ & values & $6{\times}10^{-28}$ & $1{\times}10^{-16}$ & $6{\times}10^{7}$\\
+geometric, $10^{12}$ & slope & $4{\times}10^{-17}$ & $1{\times}10^{-16}$ & $2{\times}10^{10}$\\
+random, unbounded & values & $1{\times}10^{-15}$ & $7{\times}10^{-17}$ & $2{\times}10^{-5}$\\
+random, unbounded & slope & $4{\times}10^{-15}$ & $2{\times}10^{-16}$ & $9{\times}10^{-4}$\\
+cluster of $10^{-4}$ cells & values & $5{\times}10^{-16}$ & $1{\times}10^{-16}$ & $2{\times}10^{-6}$\\
+cluster of $10^{-4}$ cells & slope & $4{\times}10^{-16}$ & $1{\times}10^{-16}$ & $2{\times}10^{-4}$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]\centering\small
+\caption{Wall time in seconds of one solve with $N^2$ unknowns, on the CPU of Table~S20. ``Dense'' is the classical
+HWCM approach.}
+\begin{tabular}{rr ccccc}
+\toprule
+$N$ & unknowns & dense & B--S & FDM setup & FDM & DCT\\
+\midrule
+16 & 256 & 0.005 & 0.000 & 0.001 & 0.000 & 0.000\\
+32 & 1024 & 0.034 & 0.000 & 0.000 & 0.000 & 0.000\\
+64 & 4096 & 0.732 & 0.002 & 0.002 & 0.000 & 0.000\\
+128 & 16384 & -- & 0.034 & 0.006 & 0.000 & 0.000\\
+256 & 65536 & -- & 0.128 & 0.021 & 0.001 & 0.001\\
+512 & 262144 & -- & 1.317 & 0.093 & 0.006 & 0.005\\
+1024 & 1048576 & -- & 8.369 & 0.466 & 0.055 & 0.037\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]\centering\small
+\caption{Cahn--Hilliard with $\varepsilon=0.0015$ on $1024^2$, stabilized SAV ($S=4$).}
+\begin{tabular}{p{0.52\textwidth}p{0.38\textwidth}}
+\toprule
+quantity & value\\
+\midrule
+grid and $\varepsilon$ & $1024^2$, 0.0015\\
+nodes per $\sqrt2\varepsilon$ & 2.17\\
+time steps & 1500$\times$$2{\times}10^{-7}$, 1500$\times$$2{\times}10^{-6}$, 1500$\times$$2{\times}10^{-5}$\\
+largest mass deviation & $4.75{\times}10^{-18}$\\
+largest step change of the modified energy & $-7.20{\times}10^{-8}$\\
+largest change of $E_h$ between samples & $-3.37{\times}10^{-5}$\\
+largest $|\nabla u_h|$ / planar-interface value $1/(\sqrt2\varepsilon)$ & 467 / 471\\
+largest $|u_h|$ & 1.028\\
+CPU time per step & 141 ms\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]\centering\small
+\caption{Plain ($S=0$) versus stabilized ($S=4$) SAV for $\varepsilon=0.0015$: 150 steps from $t=0.0033$.}
+\begin{tabular}{cc cccc}
+\toprule
+$S$ & $\Delta t$ & $\max|u_h|$ & $E_h$ (start $\to$ end) & $\xi$ & max $\Delta\tilde E$\\
+\midrule
+0 & $2{\times}10^{-5}$ & 77.33 & 0.062 $\to$ 503.681 & -0.00003 & $-4.59{\times}10^{-5}$\\
+0 & $5{\times}10^{-6}$ & 122.58 & 0.062 $\to$ 801.433 & -0.00002 & $-3.23{\times}10^{-5}$\\
+4 & $2{\times}10^{-5}$ & 1.04 & 0.062 $\to$ 0.050 & 1.00002 & $-5.02{\times}10^{-5}$\\
+4 & $5{\times}10^{-6}$ & 1.04 & 0.062 $\to$ 0.058 & 1.00000 & $-2.27{\times}10^{-5}$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]\centering\small
+\caption{Time per Cahn--Hilliard time step with $D_2^{(4)}$.}
+\textit{(a) CPU, double precision (ms per step)}\\[2pt]
+\begin{tabular}{rr r cc}
+\toprule
+$d$ & $N$ & unknowns & GEMM & DCT\\
+\midrule
+2 & 128 & 16384 & 0.77 & 0.34\\
+2 & 256 & 65536 & 2.25 & 1.55\\
+2 & 512 & 262144 & 12.69 & 12.02\\
+2 & 1024 & 1048576 & 146.23 & 103.26\\
+2 & 2048 & 4194304 & -- & 363.06\\
+3 & 32 & 32768 & 0.99 & 1.06\\
+3 & 64 & 262144 & 8.11 & 9.41\\
+3 & 128 & 2097152 & 191.31 & 189.90\\
+\bottomrule
+\end{tabular}
+
+\medskip
+\textit{(b) GPU (ms per step)}\\[2pt]
+\begin{tabular}{rr cc cc}
+\toprule
+& & \multicolumn{2}{c}{double precision} & \multicolumn{2}{c}{single precision}\\
+$d$ & $N$ & GEMM & DCT & GEMM & DCT\\
+\midrule
+2 & 128 & 1.10 & 2.13 & 1.18 & 2.17\\
+2 & 256 & 3.14 & 2.59 & 3.29 & 2.18\\
+2 & 512 & 13.98 & 2.89 & 11.21 & 2.88\\
+2 & 1024 & 75.91 & 10.63 & 76.42 & 10.62\\
+2 & 2048 & 589.88 & 44.33 & 591.10 & 44.18\\
+3 & 32 & 1.46 & 2.93 & 1.80 & 2.94\\
+3 & 64 & 3.35 & 3.66 & 3.42 & 3.63\\
+3 & 128 & 35.14 & 31.91 & 34.97 & 32.05\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]\centering\footnotesize\setlength{\tabcolsep}{4pt}
+\caption{Local refinement at a corner singularity of the Laplace equation: nested composite patches
+versus the tensor grid with the same local resolution (relative $H^1$ error, wall-clock time on the CPU of
+Table~S20).}
+\input{tables/t_local.tex}
+\end{table}
