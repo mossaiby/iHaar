@@ -1,4 +1,4 @@
-"""Body of the article (used by make_eabe.py): the sections from "Fast solvers in two and three dimensions"
+"""Body of the article (used by make_camwa.py): the sections from "Fast solvers in two and three dimensions"
 to the conclusions of manuscript_lean.tex, with all revisions from the review rounds applied (qualified
 claims, environment table, robustness section, figure panels, renumbered supplement tables).
 Timing-dependent numbers are computed from the stored results."""

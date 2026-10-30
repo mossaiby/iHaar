@@ -16,8 +16,8 @@ git clone https://github.com/mossaiby/iHaar.git
 cd iHaar
 ```
 
-Code, tests and reproduction scripts for the manuscript submitted to *Engineering Analysis with Boundary
-Elements* (`paper/submission_eabe/`).
+Code, tests and reproduction scripts for the manuscript submitted to *Computers & Mathematics with
+Applications* (`paper/submission_camwa/`).
 
 ## Layout
 ```
@@ -46,13 +46,13 @@ experiments/run_all.py     every table/figure: E1 verification/cost, E2 elastici
 requirements.txt / requirements-gpu.txt   dependencies (GPU file adds CuPy)
 experiments/make_tables.py  LaTeX tables generated from results/*.json -> paper/tables/
 experiments/make_figures.py figure panels generated from results/ -> figures/panels/
-paper/manuscript_eabe.tex  the article (elsarticle), built by `python paper/tools/make_eabe.py` from
-                           tools/eabe_front.tex (front matter, method), tools/paper_body.py (results),
-                           tools/eabe_appendix.tex (appendices)
-paper/supplementary_eabe.tex  its Supplementary Material (proofs: Part A; tables S1-S27: Part B),
-                           built by `python paper/tools/make_supplement_eabe.py`
-paper/submission_eabe/     self-contained submission (tables inlined, figures, highlights, cover letter),
-                           built by `python paper/tools/make_submission_eabe.py`
+paper/manuscript_camwa.tex the article (elsarticle), built by `python paper/tools/make_camwa.py` from
+                           tools/camwa_front.tex (front matter, method), tools/paper_body.py (results),
+                           tools/camwa_appendix.tex (appendices)
+paper/supplementary_camwa.tex  its Supplementary Material (proofs: Part A; tables S1-S27: Part B),
+                           built by `python paper/tools/make_supplement_camwa.py`
+paper/submission_camwa/    self-contained submission (tables inlined, figures, highlights, cover letter),
+                           built by `python paper/tools/make_submission_camwa.py`
 paper/manuscript.tex, paper/manuscript_lean.tex   earlier full and lean drafts; sources of the
                            statements, proofs, body text and bibliography used by the build scripts
 paper/supplementary.tex    Part A source (statements and proofs), built by `python paper/tools/make_supplement.py`
@@ -68,8 +68,8 @@ python experiments/run_all.py            # ~25 min on one core (E8c alone ~8 min
 # --only E8c_stage0, E8c_stage1, E8c_stage2, then E8c_finalize and E8fig
 python experiments/make_tables.py
 python experiments/make_figures.py      # individual figure panels -> figures/panels/
-python paper/tools/make_supplement.py && python paper/tools/make_eabe.py && python paper/tools/make_supplement_eabe.py && python paper/tools/make_submission_eabe.py
-cd paper/submission_eabe && latexmk -pdf manuscript.tex supplementary.tex     # needs elsarticle.cls (TeX Live/MiKTeX)
+python paper/tools/make_supplement.py && python paper/tools/make_camwa.py && python paper/tools/make_supplement_camwa.py && python paper/tools/make_submission_camwa.py
+cd paper/submission_camwa && latexmk -pdf manuscript.tex supplementary.tex    # needs elsarticle.cls (TeX Live/MiKTeX)
 ```
 `cleanup.ps1` removes LaTeX build files and Python caches.
 

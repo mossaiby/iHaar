@@ -22,9 +22,9 @@ venv/
 *.toc
 *.spl
 paper/*.pdf
-# compiled submission (the figure PDFs in paper/submission_eabe ARE needed and stay tracked)
-paper/submission_eabe/manuscript.pdf
-paper/submission_eabe/supplementary.pdf
+# compiled submissions (the figure PDFs in paper/submission_camwa ARE needed and stay tracked)
+paper/submission_camwa/manuscript.pdf
+paper/submission_camwa/supplementary.pdf
 
 # Figure previews (PDF figures are tracked)
 figures/*.png

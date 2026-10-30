@@ -1,6 +1,6 @@
-"""Build paper/supplementary_eabe.tex for the EABE article: Part A (statements and proofs of Results 1-5)
+"""Build paper/supplementary_camwa.tex for the article: Part A (statements and proofs of Results 1-5)
 from supplementary.tex (run make_supplement.py first), Part B (tables S1-S19 and the 3D figure), and the
-tables moved out of the main text (S20 onwards, written by make_eabe.py)."""
+tables moved out of the main text (S20 onwards, written by make_camwa.py)."""
 import os, re
 os.chdir(os.path.join(os.path.dirname(__file__), ".."))
 lean = open("supplementary.tex").read()
@@ -57,8 +57,8 @@ $0.51$ (b) and $0.76$ (c) at $t=""" + ("%.4f" % _t3 if _t3 else "T") + r"""$. Th
 \end{document}
 """
 b = re.sub(r"(?<![A-Za-z\\])D_([12])", r"\\mathbf D_\1", body + tail[:tail.index(r"\end{document}")])
-# tables moved out of the EABE main text (S20 onwards), written by make_eabe.py
-b += "\\clearpage\n" + open("tables/eabe_moved.tex").read() + "\n"
+# tables moved out of the main text (S20 onwards), written by make_camwa.py
+b += "\\clearpage\n" + open("tables/camwa_moved.tex").read() + "\n"
 k = lean.index(r"\begin{thebibliography}"); bib = lean[lean.rfind(r"\ifincludeproof", 0, k):lean.index(r"\end{document}")]
-open("supplementary_eabe.tex", "w").write(a + b + bib + "\\end{document}\n")
-print("supplementary_eabe.tex written;", b.count(r"\begin{table}"), "tables")
+open("supplementary_camwa.tex", "w").write(a + b + bib + "\\end{document}\n")
+print("supplementary_camwa.tex written;", b.count(r"\begin{table}"), "tables")

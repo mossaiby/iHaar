@@ -35,8 +35,9 @@ for k, v in num.items():
 left = re.findall(r"\\ref\{(?:thm|cor|prop|app|sec):[^}]*\}", app)
 assert not left, left
 head = r"""\documentclass[11pt]{article}
+\usepackage{stix}
 \usepackage[textwidth=15cm,textheight=22cm]{geometry}
-\usepackage{amsmath,amssymb,amsthm,booktabs,graphicx,array}
+\usepackage{amsmath,amsthm,booktabs,graphicx,array}
 \usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
 \setlength{\emergencystretch}{2.5em}
 % Use \includeprooffalse when this supplement accompanies the FULL version (its appendix already
