@@ -51,7 +51,8 @@ paper/manuscript_camwa.tex the article (elsarticle), built by `python paper/tool
                            tools/camwa_appendix.tex (appendices)
 paper/supplementary_camwa.tex  its Supplementary Material (proofs: Part A; tables S1-S27: Part B),
                            built by `python paper/tools/make_supplement_camwa.py`
-paper/submission_camwa/    self-contained submission (tables inlined, figures, highlights, cover letter),
+paper/submission_camwa/    self-contained submission (tables inlined, figures, highlights, cover letter,
+                           latex_source.zip with the LaTeX sources and figures for upload),
                            built by `python paper/tools/make_submission_camwa.py`
 paper/manuscript.tex, paper/manuscript_lean.tex   earlier full and lean drafts; sources of the
                            statements, proofs, body text and bibliography used by the build scripts

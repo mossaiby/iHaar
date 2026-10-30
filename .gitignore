@@ -25,6 +25,7 @@ paper/*.pdf
 # compiled submissions (the figure PDFs in paper/submission_camwa ARE needed and stay tracked)
 paper/submission_camwa/manuscript.pdf
 paper/submission_camwa/supplementary.pdf
+paper/submission_camwa/latex_source.zip
 
 # Figure previews (PDF figures are tracked)
 figures/*.png
