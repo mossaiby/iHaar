@@ -29,22 +29,20 @@ sharp-interface phase-field computations and adaptive elastostatics}
             city={Isfahan}, postcode={81744-73441}, country={Iran}}
 
 \begin{abstract}
-The Haar wavelet collocation method (HWCM) is popular in engineering because it is easy to derive and
-to program. In two and three dimensions, however, it is usually solved through large dense matrices, and
-it is limited to second-order accuracy. We show that these limitations disappear when the method is
-written in terms of nodal values, where it becomes midpoint quadratic-spline collocation. An exact
-three-term relation turns the dense HWCM matrices into tridiagonal ones, and we prove that the resulting
-second-derivative operator has real, simple and nonpositive eigenvalues on every strictly increasing
-grid. Fast diagonalization, which reduces problems on tensor grids to a few dense matrix products, is
-therefore always well defined, including on adaptively refined grids. In floating-point arithmetic it
-was backward stable on random and adversarial grids, and an inexpensive check guards against failure. On uniform grids, a correction that costs nothing extra
-raises the accuracy to fourth order for zero-flux conditions. Building on this, we present Allen--Cahn
-and Cahn--Hilliard solvers that conserve mass exactly, satisfy a modified-energy law, and resolve
-interfaces with about four nodes across the transition layer. We also present a plane elastostatics
-solver for compressible materials with prescribed displacements and tractions, whose automatic
-refinement recovered the optimal convergence rate at the tested corner singularities. In a benchmark
-against biquadratic finite elements on identical grids, the method needed about a quarter of the
-unknowns. The code that reproduces every result is openly available.
+The Haar wavelet collocation method (HWCM) is popular in engineering because it is simple to program,
+but in two and three dimensions it is usually solved through large dense matrices and is
+limited to second-order accuracy. We show that, written in nodal values, the method becomes midpoint
+quadratic-spline collocation. An exact three-term relation turns the dense HWCM matrices into tridiagonal
+ones, and we prove that the resulting second-derivative operator has real, simple and nonpositive
+eigenvalues on every strictly increasing grid. Fast diagonalization, which reduces tensor-grid problems to
+a few dense matrix products, is therefore always well defined, including on adaptively refined grids, and
+was backward stable on random and adversarial grids. On uniform grids, a cost-free correction raises the
+accuracy to fourth order for zero-flux conditions. We present Allen--Cahn and Cahn--Hilliard solvers that
+conserve mass exactly, satisfy a modified-energy law, and resolve interfaces with about four nodes across
+the transition layer, and a plane elastostatics solver with displacement and traction boundaries, whose
+automatic refinement recovered the optimal convergence rate at the tested corner singularities. Against
+biquadratic finite elements on identical grids, the method needed about a quarter of the unknowns. All
+code is openly available.
 \end{abstract}
 
 \begin{keyword}
